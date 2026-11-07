@@ -218,16 +218,27 @@ async def chat_synchronous(
     db.commit()
 
     # Build history context
+    h_limit = req.history_limit or 10
     history = [
         {"role": m.role, "content": m.content}
-        for m in conversation.messages[-10:]
+        for m in conversation.messages[-h_limit:]
     ]
     if not any(m["role"] == "user" and m["content"] == req.message for m in history):
         history.append({"role": "user", "content": req.message})
 
     # Collect response chunks
     full_response = []
-    async for chunk in stream_ai_response(history, req.model or conversation.model, req.language or conversation.language):
+    async for chunk in stream_ai_response(
+        history,
+        model=req.model or conversation.model,
+        language=req.language or conversation.language,
+        provider=req.provider,
+        api_key=req.api_key,
+        base_url=req.base_url,
+        temperature=req.temperature or 0.7,
+        system_prompt=req.system_prompt,
+        max_tokens=req.max_tokens or 4096
+    ):
         full_response.append(chunk)
 
     assistant_reply = "".join(full_response)
@@ -291,9 +302,10 @@ async def chat_stream(
     db.commit()
 
     # Build history context
+    h_limit = req.history_limit or 10
     history = [
         {"role": m.role, "content": m.content}
-        for m in conversation.messages[-10:]
+        for m in conversation.messages[-h_limit:]
     ]
 
     conv_id = conversation.id
@@ -314,7 +326,17 @@ async def chat_stream(
 
         assistant_chunks = []
         try:
-            async for chunk in stream_ai_response(history, model_to_use, lang_to_use):
+            async for chunk in stream_ai_response(
+                history,
+                model=model_to_use,
+                language=lang_to_use,
+                provider=req.provider,
+                api_key=req.api_key,
+                base_url=req.base_url,
+                temperature=req.temperature or 0.7,
+                system_prompt=req.system_prompt,
+                max_tokens=req.max_tokens or 4096
+            ):
                 assistant_chunks.append(chunk)
                 payload = {
                     "conversation_id": conv_id,

@@ -3,11 +3,32 @@
  * Handles authentication lifecycle, multilingual dictionary, notifications, and UI shell.
  */
 
+// Default AI Settings
+const DEFAULT_AI_SETTINGS = {
+  provider: "cyberai",
+  model: "gpt-4o-mini",
+  apiKey: "",
+  baseUrl: "",
+  persona: "senior_architect",
+  systemPrompt: "Siz yuqori malakali Senior Kiberxavfsizlik Arxitektori (Defensive Security Architect) va xavfsiz dasturiy ta'minot muhandisisiz. OWASP Top 10, FastAPI/Python xavfsiz arxitekturasi va korporativ mudofaa bo'yicha professional maslahat bering.",
+  temperature: 0.7,
+  maxTokens: 4096,
+  historyLimit: 10,
+  soundEnabled: true,
+  sendOnEnter: true
+};
+
+let loadedSettings = null;
+try {
+  loadedSettings = JSON.parse(localStorage.getItem("cyberai_settings"));
+} catch (e) {}
+
 // Global State
 window.CYBERAI = {
   token: localStorage.getItem("cyberai_token") || null,
   user: null,
   lang: localStorage.getItem("cyberai_lang") || "uz",
+  settings: Object.assign({}, DEFAULT_AI_SETTINGS, loadedSettings || {}),
   translations: {
     uz: {
       new_chat: "Yangi Suhbat",
@@ -344,63 +365,284 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   checkAuthStatus();
+  setupSettingsModal();
+});
 
-  // AI Key Modal Handlers
-  const openModalBtn = document.getElementById("open-api-modal-btn");
-  const modal = document.getElementById("api-key-modal");
-  const closeModalBtn = document.getElementById("close-api-modal-btn");
-  const cancelModalBtn = document.getElementById("cancel-api-modal-btn");
-  const saveKeyBtn = document.getElementById("save-api-modal-btn");
+/**
+ * Cyber Chime Synthesizer via Web Audio API
+ */
+window.playCyberChime = function() {
+  if (!CYBERAI.settings || CYBERAI.settings.soundEnabled === false) return;
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+    osc.frequency.exponentialRampToValueAtTime(783.99, ctx.currentTime + 0.08); // G5
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.22);
+  } catch (e) {}
+};
 
-  if (openModalBtn && modal) {
-    openModalBtn.addEventListener("click", () => {
-      modal.classList.add("active");
+/**
+ * Real AI Settings Modal Controller
+ */
+function setupSettingsModal() {
+  const modal = document.getElementById("settings-modal");
+  if (!modal) return;
+
+  const openBtns = [
+    document.getElementById("open-settings-modal-btn"),
+    document.getElementById("sidebar-settings-btn")
+  ].filter(Boolean);
+
+  const closeBtn = document.getElementById("close-settings-modal-btn");
+  const cancelBtn = document.getElementById("cancel-settings-btn");
+  const saveBtn = document.getElementById("save-settings-btn");
+  const resetBtn = document.getElementById("reset-settings-btn");
+  const toggleKeyBtn = document.getElementById("toggle-key-visibility-btn");
+
+  const providerSelect = document.getElementById("setting-provider");
+  const modelInput = document.getElementById("setting-model");
+  const apiKeyInput = document.getElementById("setting-api-key");
+  const baseUrlInput = document.getElementById("setting-base-url");
+  const systemPromptInput = document.getElementById("setting-system-prompt");
+  const tempInput = document.getElementById("setting-temperature");
+  const tempDisplay = document.getElementById("temp-val-display");
+  const maxTokensSelect = document.getElementById("setting-max-tokens");
+  const historyInput = document.getElementById("setting-history-limit");
+  const historyDisplay = document.getElementById("history-val-display");
+  const soundCheck = document.getElementById("setting-sound-enabled");
+  const enterCheck = document.getElementById("setting-send-on-enter");
+
+  const PERSONA_PROMPTS = {
+    senior_architect: "Siz yuqori malakali Senior Kiberxavfsizlik Arxitektori (Defensive Security Architect) va xavfsiz dasturiy ta'minot muhandisisiz. OWASP Top 10, FastAPI/Python xavfsiz arxitekturasi va korporativ mudofaa bo'yicha professional maslahat bering.",
+    ethical_hacker: "Siz sertifikatlangan Ethical Hacker va Penetration Tester (Offensive / Red Team) mutaxassisisiz. Zaifliklarni topish, ularni laboratoriya muhitida xavfsiz tekshirish va tizimni buzilmas qilib mustahkamlash usullarini o'rgatasiz.",
+    code_auditor: "Siz qat'iy Kod Xavfsizligi Auditori va Static Code Analysis mutaxassisisiz. Kodlardagi har qanday SQLi, XSS, SSRF, RCE va ochiq kalitlarni aniqlab, qat'iy xavfsiz, tuzatilgan to'liq kod namunalarini taqdim etasiz.",
+    beginner_tutor: "Siz kiberxavfsizlik va dasturlashni yangi boshlaganlar uchun sabrli va professional o'qituvchisiz. Barcha tushunchalarni sodda, qiziqarli hayotiy o'xshatishlar va qadamma-qadam ko'rsatmalar bilan tushuntirasiz."
+  };
+
+  function syncFormWithSettings() {
+    const s = CYBERAI.settings;
+    if (providerSelect) providerSelect.value = s.provider || "cyberai";
+    if (modelInput) modelInput.value = s.model || "gpt-4o-mini";
+    if (apiKeyInput) apiKeyInput.value = s.apiKey || "";
+    if (baseUrlInput) baseUrlInput.value = s.baseUrl || "";
+    if (systemPromptInput) systemPromptInput.value = s.systemPrompt || PERSONA_PROMPTS[s.persona] || "";
+    if (tempInput) {
+      tempInput.value = s.temperature !== undefined ? s.temperature : 0.7;
+      if (tempDisplay) tempDisplay.textContent = tempInput.value;
+    }
+    if (maxTokensSelect) maxTokensSelect.value = s.maxTokens || "4096";
+    if (historyInput) {
+      historyInput.value = s.historyLimit || 10;
+      if (historyDisplay) historyDisplay.textContent = historyInput.value + " ta xabar";
+    }
+    if (soundCheck) soundCheck.checked = s.soundEnabled !== false;
+    if (enterCheck) enterCheck.checked = s.sendOnEnter !== false;
+
+    // Highlight active persona preset
+    document.querySelectorAll(".persona-preset-card").forEach(card => {
+      card.classList.toggle("active", card.dataset.preset === s.persona);
     });
   }
 
-  function closeModal() {
-    if (modal) modal.classList.remove("active");
+  function openModal() {
+    syncFormWithSettings();
+    modal.classList.add("active");
   }
 
-  if (closeModalBtn) closeModalBtn.addEventListener("click", closeModal);
-  if (cancelModalBtn) cancelModalBtn.addEventListener("click", closeModal);
+  function closeModal() {
+    modal.classList.remove("active");
+  }
 
-  if (saveKeyBtn) {
-    saveKeyBtn.addEventListener("click", async () => {
-      const provider = document.getElementById("modal-ai-provider").value;
-      const apiKey = document.getElementById("modal-ai-key").value.trim();
-      const model = document.getElementById("modal-ai-model").value.trim();
+  openBtns.forEach(b => b.addEventListener("click", openModal));
+  if (closeBtn) closeBtn.addEventListener("click", closeModal);
+  if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
 
-      if (!apiKey) {
-        showToast("Iltimos, API kalitini kiriting.", "error");
-        return;
+  // Close modal when clicking outside
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  // Tab switching
+  document.querySelectorAll(".settings-tab-btn").forEach(tabBtn => {
+    tabBtn.addEventListener("click", () => {
+      document.querySelectorAll(".settings-tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".settings-tab-pane").forEach(p => p.classList.remove("active"));
+      tabBtn.classList.add("active");
+      const targetPane = document.getElementById(tabBtn.dataset.tab);
+      if (targetPane) targetPane.classList.add("active");
+    });
+  });
+
+  // Persona Presets
+  document.querySelectorAll(".persona-preset-card").forEach(card => {
+    card.addEventListener("click", () => {
+      document.querySelectorAll(".persona-preset-card").forEach(c => c.classList.remove("active"));
+      card.classList.add("active");
+      const preset = card.dataset.preset;
+      CYBERAI.settings.persona = preset;
+      if (PERSONA_PROMPTS[preset] && systemPromptInput) {
+        systemPromptInput.value = PERSONA_PROMPTS[preset];
+      }
+    });
+  });
+
+  // Slider inputs
+  if (tempInput && tempDisplay) {
+    tempInput.addEventListener("input", () => {
+      tempDisplay.textContent = tempInput.value;
+    });
+  }
+
+  if (historyInput && historyDisplay) {
+    historyInput.addEventListener("input", () => {
+      historyDisplay.textContent = historyInput.value + " ta xabar";
+    });
+  }
+
+  // Toggle API Key visibility
+  if (toggleKeyBtn && apiKeyInput) {
+    toggleKeyBtn.addEventListener("click", () => {
+      if (apiKeyInput.type === "password") {
+        apiKeyInput.type = "text";
+        toggleKeyBtn.textContent = "Yashirish";
+      } else {
+        apiKeyInput.type = "password";
+        toggleKeyBtn.textContent = "Ko'rsatish";
+      }
+    });
+  }
+
+  // Provider changes: set smart defaults
+  if (providerSelect && modelInput) {
+    providerSelect.addEventListener("change", () => {
+      const p = providerSelect.value;
+      if (p === "deepseek") {
+        modelInput.value = "deepseek-chat";
+        if (baseUrlInput) baseUrlInput.placeholder = "https://api.deepseek.com/v1";
+      } else if (p === "groq") {
+        modelInput.value = "llama-3.3-70b-versatile";
+        if (baseUrlInput) baseUrlInput.placeholder = "https://api.groq.com/openai/v1";
+      } else if (p === "openai") {
+        modelInput.value = "gpt-4o-mini";
+        if (baseUrlInput) baseUrlInput.placeholder = "https://api.openai.com/v1";
+      } else if (p === "ollama") {
+        modelInput.value = "llama3";
+        if (baseUrlInput) baseUrlInput.placeholder = "http://localhost:11434";
+      } else if (p === "cyberai") {
+        modelInput.value = "gpt-4o-mini";
+      }
+    });
+  }
+
+  // Save Settings
+  if (saveBtn) {
+    saveBtn.addEventListener("click", () => {
+      CYBERAI.settings = {
+        provider: providerSelect ? providerSelect.value : "cyberai",
+        model: modelInput ? modelInput.value.trim() || "gpt-4o-mini" : "gpt-4o-mini",
+        apiKey: apiKeyInput ? apiKeyInput.value.trim() : "",
+        baseUrl: baseUrlInput ? baseUrlInput.value.trim() : "",
+        persona: CYBERAI.settings.persona || "senior_architect",
+        systemPrompt: systemPromptInput ? systemPromptInput.value.trim() : "",
+        temperature: tempInput ? parseFloat(tempInput.value) : 0.7,
+        maxTokens: maxTokensSelect ? parseInt(maxTokensSelect.value) : 4096,
+        historyLimit: historyInput ? parseInt(historyInput.value) : 10,
+        soundEnabled: soundCheck ? soundCheck.checked : true,
+        sendOnEnter: enterCheck ? enterCheck.checked : true
+      };
+
+      localStorage.setItem("cyberai_settings", JSON.stringify(CYBERAI.settings));
+
+      // Update topbar model dropdown if present
+      const topModelSelector = document.getElementById("model-selector");
+      if (topModelSelector) {
+        let optExists = Array.from(topModelSelector.options).some(o => o.value === CYBERAI.settings.model);
+        if (!optExists) {
+          const newOpt = document.createElement("option");
+          newOpt.value = CYBERAI.settings.model;
+          newOpt.textContent = CYBERAI.settings.model;
+          topModelSelector.appendChild(newOpt);
+        }
+        topModelSelector.value = CYBERAI.settings.model;
       }
 
-      let baseUrl = "https://api.openai.com/v1";
-      if (provider === "groq") baseUrl = "https://api.groq.com/openai/v1";
-      else if (provider === "openrouter") baseUrl = "https://openrouter.ai/api/v1";
-      else if (provider === "ollama") baseUrl = "http://localhost:11434";
+      showToast("AI Sozlamalari muvaffaqiyatli saqlandi va faollashtirildi!", "success");
+      playCyberChime();
+      closeModal();
+    });
+  }
 
+  // Reset to default
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      CYBERAI.settings = Object.assign({}, DEFAULT_AI_SETTINGS);
+      localStorage.setItem("cyberai_settings", JSON.stringify(CYBERAI.settings));
+      syncFormWithSettings();
+      showToast("Barcha sozlamalar standart holatga qaytarildi.", "info");
+    });
+  }
+
+  // Clear all chats
+  const clearChatsBtn = document.getElementById("clear-all-chats-btn");
+  if (clearChatsBtn) {
+    clearChatsBtn.addEventListener("click", async () => {
+      if (!confirm("Barcha suhbatlar tarixini butunlay o'chirib tashlamoqchimisiz?")) return;
       try {
-        const res = await apiFetch("/api/admin/ai-config", {
-          method: "POST",
-          body: JSON.stringify({
-            provider,
-            api_key: apiKey,
-            model: model || (provider === "groq" ? "llama-3.3-70b-versatile" : "gpt-4o-mini"),
-            base_url: baseUrl
-          })
-        });
-        const data = await res.json();
+        const res = await apiFetch("/api/conversations");
         if (res.ok) {
-          showToast(data.message || "API kalit muvaffaqiyatli ulandi!", "success");
+          const list = await res.json();
+          for (const conv of list) {
+            await apiFetch(`/api/conversations/${conv.id}`, { method: "DELETE" });
+          }
+          showToast("Barcha suhbatlar o'chirildi.", "success");
           closeModal();
-        } else {
-          showToast(data.detail || "Kalitni saqlab bo'lmadi.", "error");
+          if (typeof startNewChat === "function") startNewChat();
         }
-      } catch (err) {
+      } catch (e) {
         showToast("Xatolik yuz berdi.", "error");
       }
     });
   }
-});
+
+  // Export all chats
+  const exportChatsBtn = document.getElementById("export-all-chats-btn");
+  if (exportChatsBtn) {
+    exportChatsBtn.addEventListener("click", async () => {
+      try {
+        const res = await apiFetch("/api/conversations");
+        if (res.ok) {
+          const list = await res.json();
+          const exportData = [];
+          for (const conv of list) {
+            const detailRes = await apiFetch(`/api/conversations/${conv.id}`);
+            if (detailRes.ok) {
+              exportData.push(await detailRes.json());
+            }
+          }
+          const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `cyberai-conversations-${new Date().toISOString().slice(0, 10)}.json`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          showToast("Suhbatlar arxivi yuklab olindi!", "success");
+        }
+      } catch (e) {
+        showToast("Eksport qilishda xato yuz berdi.", "error");
+      }
+    });
+  }
+}

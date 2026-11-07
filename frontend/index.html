@@ -70,9 +70,14 @@
             <div class="user-role-badge" id="user-role-badge">USER</div>
           </div>
         </div>
-        <button class="history-btn" id="logout-btn" title="Chiqish">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-        </button>
+        <div style="display: flex; align-items: center; gap: 0.35rem;">
+          <button class="history-btn" id="sidebar-settings-btn" title="Sozlamalar">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </button>
+          <button class="history-btn" id="logout-btn" title="Chiqish">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          </button>
+        </div>
       </div>
     </aside>
 
@@ -95,18 +100,19 @@
         </div>
 
         <div class="top-bar-right">
-          <!-- AI API Key Connection Button -->
-          <button class="btn btn-secondary" id="open-api-modal-btn" style="padding: 0.4rem 0.85rem; font-size: 0.85rem; gap: 0.4rem;" title="AI Tokenini sozlash">
-            <span>🔑</span>
-            <span>API Kalit Ulash</span>
+          <!-- Real AI Settings Modal Button -->
+          <button class="btn btn-secondary" id="open-settings-modal-btn" style="padding: 0.45rem 0.95rem; font-size: 0.85rem; gap: 0.45rem;" title="AI va Tizim Sozlamalari">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>Sozlamalar</span>
           </button>
 
           <!-- AI Model Selector -->
           <select class="select-input" id="model-selector" title="AI Modelini tanlash">
             <option value="gpt-4o-mini">CYBERAI Guard (gpt-4o-mini)</option>
             <option value="gpt-4o">CYBERAI DeepSec (gpt-4o)</option>
+            <option value="deepseek-chat">DeepSeek V3 (deepseek-chat)</option>
+            <option value="llama-3.3-70b-versatile">Groq Llama 3.3 70B</option>
             <option value="llama3">Ollama Local (llama3)</option>
-            <option value="demo">Lokal Mudofaa Modeli</option>
           </select>
 
           <!-- Language Selector -->
@@ -156,39 +162,176 @@
     </main>
   </div>
 
-  <!-- AI Token Connection Modal -->
-  <div class="modal-overlay" id="api-key-modal">
-    <div class="modal-box">
+  <!-- Real AI Settings Modal -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-box settings-modal-box">
       <div class="modal-header">
-        <h3 style="display: flex; align-items: center; gap: 0.5rem;">
-          <span>🔑</span>
-          <span>AI Provayder Kalitini (Token) Ulash</span>
-        </h3>
-        <button class="modal-close-btn" id="close-api-modal-btn">&times;</button>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div class="stat-icon" style="width: 38px; height: 38px; border-radius: 10px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </div>
+          <div>
+            <h3 style="font-size: 1.25rem; font-weight: 800; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CYBERAI Sozlamalari</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Sun'iy intellekt modeli, mutaxassislik personasi va generatsiya parametrlari</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="close-settings-modal-btn">&times;</button>
       </div>
-      <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
-        OpenAI, Groq yoki boshqa OpenAI-mos provayder kalitini ulab, real vaqtda jonli generatsiyadan foydalaning.
+
+      <!-- Navigation Tabs -->
+      <div class="settings-tabs-header">
+        <button class="settings-tab-btn active" data-tab="tab-model">🧠 Model & API</button>
+        <button class="settings-tab-btn" data-tab="tab-persona">🛡️ Persona & Ko'rsatma</button>
+        <button class="settings-tab-btn" data-tab="tab-params">⚙️ Parametrlar</button>
+        <button class="settings-tab-btn" data-tab="tab-preferences">🔔 Ovoz & Qulaylik</button>
       </div>
-      <div class="form-group">
-        <label class="form-label">Provayder:</label>
-        <select id="modal-ai-provider" class="select-input" style="width: 100%;">
-          <option value="openai">OpenAI (Rasmiy: api.openai.com)</option>
-          <option value="groq">Groq (Tezkor Llama: api.groq.com)</option>
-          <option value="openrouter">OpenRouter (openrouter.ai)</option>
-          <option value="ollama">Mahalliy Ollama (localhost:11434)</option>
-        </select>
+
+      <div class="settings-tabs-content">
+        <!-- TAB 1: Model & API -->
+        <div class="settings-tab-pane active" id="tab-model">
+          <div class="form-group">
+            <label class="form-label">AI Provayderi:</label>
+            <select id="setting-provider" class="select-input" style="width: 100%;">
+              <option value="cyberai">⚡ CYBERAI Built-in Engine (Bepul / O'rnatilgan)</option>
+              <option value="openai">🟢 OpenAI (Rasmiy: GPT-4o, GPT-4o-mini)</option>
+              <option value="deepseek">🟣 DeepSeek (Arzon & Aql-idrok: DeepSeek-V3, R1)</option>
+              <option value="groq">🟠 Groq Cloud (Ultra tezkor Llama 3.3 70B)</option>
+              <option value="ollama">💻 Mahalliy Ollama (localhost:11434)</option>
+              <option value="custom">🌐 Maxsus OpenAI-Mos API (OpenRouter, Together, vLLM)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Model Nomi:</label>
+            <input type="text" id="setting-model" class="form-input" placeholder="gpt-4o-mini, deepseek-chat, llama-3.3-70b-versatile">
+            <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">Tavsiya etiladi: gpt-4o-mini, gpt-4o, deepseek-chat yoki llama-3.3-70b-versatile</span>
+          </div>
+
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label class="form-label" style="margin: 0;">Shaxsiy API Kalit (Token):</label>
+              <button type="button" id="toggle-key-visibility-btn" style="background: none; border: none; color: var(--accent-cyan); font-size: 0.75rem; cursor: pointer;">Ko'rsatish</button>
+            </div>
+            <input type="password" id="setting-api-key" class="form-input" placeholder="sk-..." autocomplete="off">
+            <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">🔒 Kalitingiz faqat brauzeringizda xavfsiz saqlanadi. CyberAI bepul rejimida bo'sh qoldirishingiz mumkin.</span>
+          </div>
+
+          <div class="form-group" id="base-url-group">
+            <label class="form-label">Maxsus API Base URL (Ixtiyoriy):</label>
+            <input type="text" id="setting-base-url" class="form-input" placeholder="https://api.openai.com/v1 yoki http://localhost:11434">
+          </div>
+        </div>
+
+        <!-- TAB 2: Persona & Instructions -->
+        <div class="settings-tab-pane" id="tab-persona">
+          <div>
+            <label class="form-label" style="margin-bottom: 0.5rem; display: block;">Mutaxassislik Personasi (Presets):</label>
+            <div class="persona-presets-grid">
+              <div class="persona-preset-card active" data-preset="senior_architect">
+                <div class="persona-card-title">🛡️ Senior Mudofaa Arxitektori</div>
+                <div class="persona-card-desc">FastAPI, OWASP Top 10 va xavfsiz tizim me'morchiligi bo'yicha chuqur tahlillar.</div>
+              </div>
+              <div class="persona-preset-card" data-preset="ethical_hacker">
+                <div class="persona-card-title">⚔️ Ethical Pentester</div>
+                <div class="persona-card-desc">Qizil jamoa (Red Team) nigohi bilan zaifliklarni topish va mustahkamlash.</div>
+              </div>
+              <div class="persona-preset-card" data-preset="code_auditor">
+                <div class="persona-card-title">🔍 Kod Auditori</div>
+                <div class="persona-card-desc">Python, JS, HTML kodlarini sinchiklab tekshirib, xavfsiz kod yechimlarini berish.</div>
+              </div>
+              <div class="persona-preset-card" data-preset="beginner_tutor">
+                <div class="persona-card-title">🎓 Kiberxavfsizlik Murabbiyi</div>
+                <div class="persona-card-desc">Boshlang'ichlar uchun oson, vizual misollar va hayotiy o'xshatishlar bilan tushuntirish.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 0.5rem;">
+            <label class="form-label">Maxsus Tizim Ko'rsatmasi (Custom System Prompt):</label>
+            <textarea id="setting-system-prompt" class="form-input" style="height: 110px; resize: vertical; font-size: 0.88rem; line-height: 1.5;" placeholder="Masalan: Menga har doim Python kod namunalarini yozib ber, zaifliklarni CVSS 3.1 ballari bilan bahola va faqat o'zbek tilida javob ber..."></textarea>
+          </div>
+        </div>
+
+        <!-- TAB 3: Generation Parameters -->
+        <div class="settings-tab-pane" id="tab-params">
+          <div class="param-slider-wrapper">
+            <div class="slider-header">
+              <span class="form-label" style="margin: 0;">Kreativlik Harorati (Temperature):</span>
+              <span class="slider-val-badge" id="temp-val-display">0.7</span>
+            </div>
+            <input type="range" id="setting-temperature" class="cyber-range-input" min="0.0" max="1.5" step="0.05" value="0.7">
+            <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted);">
+              <span>0.0 (Aniq & Qat'iy audit)</span>
+              <span>0.7 (Muvozanatli)</span>
+              <span>1.5 (Kreativ & Keng)</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Maksimal Tokenlar (Max Tokens):</label>
+            <select id="setting-max-tokens" class="select-input" style="width: 100%;">
+              <option value="2048">2,048 token (~1,500 so'z)</option>
+              <option value="4096" selected>4,096 token (~3,000 so'z - Tavsiya etiladi)</option>
+              <option value="8192">8,192 token (Katta kod tahlillari uchun)</option>
+              <option value="16384">16,384 token (To'liq arxitektura)</option>
+            </select>
+          </div>
+
+          <div class="param-slider-wrapper">
+            <div class="slider-header">
+              <span class="form-label" style="margin: 0;">Kontekst Xotirasi Uzunligi (Chat History):</span>
+              <span class="slider-val-badge" id="history-val-display">10 ta xabar</span>
+            </div>
+            <input type="range" id="setting-history-limit" class="cyber-range-input" min="4" max="30" step="2" value="10">
+            <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted);">
+              <span>4 ta (Tezkor & Yengil)</span>
+              <span>10 ta (Standart)</span>
+              <span>30 ta (Katta xotira)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: Preferences & Sound -->
+        <div class="settings-tab-pane" id="tab-preferences">
+          <div class="switch-wrapper">
+            <div class="switch-label-group">
+              <span class="switch-title">Ovozli Bildirishnoma (Cyber Chime)</span>
+              <span class="switch-subtitle">AI javob berib bo'lganda yoqimli cyber ovozli signal chalish</span>
+            </div>
+            <label class="cyber-switch">
+              <input type="checkbox" id="setting-sound-enabled" checked>
+              <span class="cyber-slider"></span>
+            </label>
+          </div>
+
+          <div class="switch-wrapper">
+            <div class="switch-label-group">
+              <span class="switch-title">Enter orqali yuborish</span>
+              <span class="switch-subtitle">Enter bosilganda yuborish, Shift+Enter yangi qator ochadi</span>
+            </div>
+            <label class="cyber-switch">
+              <input type="checkbox" id="setting-send-on-enter" checked>
+              <span class="cyber-slider"></span>
+            </label>
+          </div>
+
+          <div style="margin-top: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem;">
+            <button type="button" class="btn btn-secondary" id="export-all-chats-btn" style="width: 100%; justify-content: center;">
+              📥 Barcha Suhbatlar Tarixini JSON Eksport Qilish
+            </button>
+            <button type="button" class="btn btn-danger" id="clear-all-chats-btn" style="width: 100%; justify-content: center;">
+              🗑️ Barcha Suhbatlar Tarixini Butunlay Tozalash
+            </button>
+          </div>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">API Kalit (Token):</label>
-        <input type="password" id="modal-ai-key" class="form-input" placeholder="sk-..." autocomplete="off">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Model nomi (Ixtiyoriy):</label>
-        <input type="text" id="modal-ai-model" class="form-input" placeholder="gpt-4o-mini yoki llama-3.3-70b-versatile">
-      </div>
-      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem;">
-        <button class="btn btn-secondary" id="cancel-api-modal-btn">Bekor qilish</button>
-        <button class="btn btn-primary" id="save-api-modal-btn">Saqlash va Ulash</button>
+
+      <div class="settings-modal-footer">
+        <button type="button" class="btn btn-secondary" id="reset-settings-btn" style="font-size: 0.82rem; padding: 0.5rem 0.85rem;">Standartga Qaytarish</button>
+        <div style="display: flex; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary" id="cancel-settings-btn">Bekor qilish</button>
+          <button type="button" class="btn btn-primary" id="save-settings-btn">Saqlash va Qo'llash</button>
+        </div>
       </div>
     </div>
   </div>

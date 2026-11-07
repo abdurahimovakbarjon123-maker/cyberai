@@ -319,55 +319,90 @@ def match_demo_response(prompt: str, language: str) -> str:
 async def stream_ai_response(
     messages: List[Dict[str, str]],
     model: Optional[str] = None,
-    language: str = "uz"
+    language: str = "uz",
+    provider: Optional[str] = None,
+    api_key: Optional[str] = None,
+    base_url: Optional[str] = None,
+    temperature: float = 0.7,
+    system_prompt: Optional[str] = None,
+    max_tokens: int = 4096
 ) -> AsyncGenerator[str, None]:
     """
     Streams AI response as text chunks.
-    Dispatches to OpenAI, Ollama, or Demo mode according to settings.
+    Dispatches to OpenAI, DeepSeek, Groq, local Ollama, or built-in CyberAI Engine according to settings.
     """
-    provider = settings.AI_PROVIDER.lower()
+    prov = (provider or settings.AI_PROVIDER or "cyberai").lower()
+    user_key = api_key or settings.AI_API_KEY
     last_user_message = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
 
     # Security check: if user prompt has malicious intent, refuse immediately
     if check_malicious_intent(last_user_message):
         refusal = get_malicious_refusal_response(language)
-        # Yield in small chunks to simulate typing
         words = refusal.split(" ")
         for i, word in enumerate(words):
             yield word + (" " if i < len(words) - 1 else "")
             await asyncio.sleep(0.015)
         return
 
-    # Check provider
-    if provider == "openai" and settings.AI_API_KEY:
+    # Check Cloud API providers (OpenAI, DeepSeek, Groq, Custom OpenAI-compatible)
+    if prov in ("openai", "deepseek", "groq", "custom") and user_key:
+        req_base_url = base_url
+        req_model = model or settings.AI_MODEL
+        if prov == "deepseek":
+            req_base_url = req_base_url or "https://api.deepseek.com/v1"
+            req_model = model or "deepseek-chat"
+        elif prov == "groq":
+            req_base_url = req_base_url or "https://api.groq.com/openai/v1"
+            req_model = model or "llama-3.3-70b-versatile"
+        elif prov == "openai":
+            req_base_url = req_base_url or settings.AI_BASE_URL or "https://api.openai.com/v1"
+            req_model = model or "gpt-4o-mini"
+        else:
+            req_base_url = req_base_url or "https://api.openai.com/v1"
+
         try:
-            async for chunk in _stream_openai(messages, model or settings.AI_MODEL, language):
+            async for chunk in _stream_openai(
+                messages,
+                req_model,
+                language,
+                api_key=user_key,
+                base_url=req_base_url,
+                temperature=temperature,
+                system_prompt=system_prompt,
+                max_tokens=max_tokens
+            ):
                 yield chunk
             return
         except Exception as e:
             err_msg = (
-                f"\n\n[Xatolik: OpenAI xizmatiga ulanishda muammo yuz berdi: {str(e)}. "
-                "Iltimos, API kalit va ulanishni tekshiring.]"
+                f"\n\n[API Xatosi ({prov.upper()}): {str(e)}. "
+                "Iltimos, API kalit va internet aloqasini tekshiring.]"
             )
             yield err_msg
             return
 
-    elif provider == "ollama":
+    elif prov == "ollama":
+        req_ollama_url = base_url or settings.OLLAMA_BASE_URL
         try:
-            async for chunk in _stream_ollama(messages, model or settings.AI_MODEL, language):
+            async for chunk in _stream_ollama(
+                messages,
+                model or settings.AI_MODEL or "llama3",
+                language,
+                base_url=req_ollama_url,
+                system_prompt=system_prompt
+            ):
                 yield chunk
             return
         except Exception as e:
             err_msg = (
-                f"\n\n[Xatolik: Mahalliy Ollama xizmatiga ({settings.OLLAMA_BASE_URL}) ulanishda xato: {str(e)}. "
-                "Ollama ishga tushirilganligini tekshiring.]"
+                f"\n\n[Ollama Xatosi ({req_ollama_url}): {str(e)}. "
+                "Mahalliy Ollama serveri ishlayotganligini tekshiring.]"
             )
             yield err_msg
             return
 
-    # Fallback to Demo Mode
+    # Fallback to Built-in CyberAI Knowledge Engine
     full_text = match_demo_response(last_user_message, language)
-    # Yield tokens smoothly to emulate natural streaming
     words = full_text.split(" ")
     for i, word in enumerate(words):
         yield word + (" " if i < len(words) - 1 else "")
@@ -377,24 +412,32 @@ async def stream_ai_response(
 async def _stream_openai(
     messages: List[Dict[str, str]],
     model: str,
-    language: str
+    language: str,
+    api_key: Optional[str] = None,
+    base_url: Optional[str] = None,
+    temperature: float = 0.7,
+    system_prompt: Optional[str] = None,
+    max_tokens: int = 4096
 ) -> AsyncGenerator[str, None]:
     """
-    Streams response from OpenAI-compatible API.
+    Streams response from OpenAI-compatible API with custom hyperparameters and system prompt.
     """
-    sys_prompt = SYSTEM_PROMPTS.get(language, SYSTEM_PROMPTS["uz"])
-    payload_messages = [{"role": "system", "content": sys_prompt}] + messages
+    base_sys_prompt = SYSTEM_PROMPTS.get(language, SYSTEM_PROMPTS["uz"])
+    final_sys_prompt = f"{base_sys_prompt}\n\nQO'SHIMCHA KO'RSATMA (USER CUSTOM INSTRUCTION):\n{system_prompt}" if system_prompt else base_sys_prompt
+    payload_messages = [{"role": "system", "content": final_sys_prompt}] + messages
 
-    url = f"{settings.AI_BASE_URL.rstrip('/')}/chat/completions"
+    target_base = (base_url or settings.AI_BASE_URL or "https://api.openai.com/v1").rstrip("/")
+    url = f"{target_base}/chat/completions"
     headers = {
-        "Authorization": f"Bearer {settings.AI_API_KEY}",
+        "Authorization": f"Bearer {api_key or settings.AI_API_KEY}",
         "Content-Type": "application/json"
     }
     body = {
         "model": model,
         "messages": payload_messages,
         "stream": True,
-        "temperature": 0.7
+        "temperature": temperature,
+        "max_tokens": max_tokens
     }
 
     async with httpx.AsyncClient(timeout=60.0) as client:
@@ -425,15 +468,19 @@ async def _stream_openai(
 async def _stream_ollama(
     messages: List[Dict[str, str]],
     model: str,
-    language: str
+    language: str,
+    base_url: Optional[str] = None,
+    system_prompt: Optional[str] = None
 ) -> AsyncGenerator[str, None]:
     """
-    Streams response from local Ollama endpoint.
+    Streams response from local Ollama endpoint with custom system prompt.
     """
-    sys_prompt = SYSTEM_PROMPTS.get(language, SYSTEM_PROMPTS["uz"])
-    payload_messages = [{"role": "system", "content": sys_prompt}] + messages
+    base_sys_prompt = SYSTEM_PROMPTS.get(language, SYSTEM_PROMPTS["uz"])
+    final_sys_prompt = f"{base_sys_prompt}\n\nQO'SHIMCHA KO'RSATMA:\n{system_prompt}" if system_prompt else base_sys_prompt
+    payload_messages = [{"role": "system", "content": final_sys_prompt}] + messages
 
-    url = f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/chat"
+    target_url = (base_url or settings.OLLAMA_BASE_URL or "http://localhost:11434").rstrip("/")
+    url = f"{target_url}/api/chat"
     body = {
         "model": model,
         "messages": payload_messages,
@@ -448,6 +495,18 @@ async def _stream_ollama(
                 return
 
             async for line in response.aiter_lines():
+                if not line:
+                    continue
+                try:
+                    data = json.loads(line)
+                    msg = data.get("message", {})
+                    content = msg.get("content")
+                    if content:
+                        yield content
+                    if data.get("done", False):
+                        break
+                except Exception:
+                    continue
                 if not line:
                     continue
                 try:

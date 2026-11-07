@@ -24,6 +24,18 @@ function initChat() {
   const stopBtn = document.getElementById("stop-btn");
   const chatInput = document.getElementById("chat-input");
   const newChatBtn = document.getElementById("new-chat-btn");
+  const modelSelect = document.getElementById("model-selector");
+
+  // Sync model selector with settings
+  if (modelSelect && window.CYBERAI && window.CYBERAI.settings) {
+    if (CYBERAI.settings.model) {
+      modelSelect.value = CYBERAI.settings.model;
+    }
+    modelSelect.addEventListener("change", (e) => {
+      CYBERAI.settings.model = e.target.value;
+      localStorage.setItem("cyberai_settings", JSON.stringify(CYBERAI.settings));
+    });
+  }
 
   if (sendBtn) {
     sendBtn.addEventListener("click", handleSendMessage);
@@ -41,7 +53,8 @@ function initChat() {
 
   if (chatInput) {
     chatInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
+      const sendOnEnter = window.CYBERAI && window.CYBERAI.settings ? (CYBERAI.settings.sendOnEnter !== false) : true;
+      if (sendOnEnter && e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         handleSendMessage();
       }
@@ -254,9 +267,10 @@ async function handleSendMessage() {
 
   setStreamingState(true);
 
-  // Read Model and Language Selection
+  // Read Settings, Model, and Language
   const modelSelect = document.getElementById("model-selector");
-  const selectedModel = modelSelect ? modelSelect.value : "gpt-4o-mini";
+  const selectedModel = modelSelect ? modelSelect.value : (CYBERAI.settings?.model || "gpt-4o-mini");
+  const s = CYBERAI.settings || {};
 
   currentAbortController = new AbortController();
 
@@ -272,8 +286,15 @@ async function handleSendMessage() {
       body: JSON.stringify({
         message: text,
         conversation_id: activeConversationId,
-        model: selectedModel,
-        language: CYBERAI.lang
+        model: s.model || selectedModel,
+        language: CYBERAI.lang,
+        provider: s.provider || "cyberai",
+        api_key: s.apiKey || undefined,
+        base_url: s.baseUrl || undefined,
+        temperature: s.temperature !== undefined ? parseFloat(s.temperature) : 0.7,
+        system_prompt: s.systemPrompt || undefined,
+        max_tokens: s.maxTokens ? parseInt(s.maxTokens) : 4096,
+        history_limit: s.historyLimit ? parseInt(s.historyLimit) : 10
       }),
       signal: currentAbortController.signal
     });
@@ -321,6 +342,9 @@ async function handleSendMessage() {
 
           if (payload.done) {
             cursor.remove();
+            if (typeof playCyberChime === "function") {
+              playCyberChime();
+            }
             break;
           }
         } catch (e) {

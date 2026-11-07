@@ -86,6 +86,13 @@ class ChatRequest(BaseModel):
     conversation_id: Optional[str] = Field(None, description="Mavjud suhbat identifikatori (agar yangi bo'lsa bo'sh)")
     model: Optional[str] = Field("gpt-4o-mini", description="Tanlangan AI modeli")
     language: Optional[str] = Field("uz", description="Suhbat tili ('uz', 'en', 'ru')")
+    provider: Optional[str] = Field("cyberai", description="AI Provayder ('cyberai', 'openai', 'deepseek', 'groq', 'ollama', 'custom')")
+    api_key: Optional[str] = Field(None, description="Foydalanuvchining shaxsiy API kaliti")
+    base_url: Optional[str] = Field(None, description="Maxsus API Base URL")
+    temperature: Optional[float] = Field(0.7, ge=0.0, le=2.0, description="Kreativlik harorati")
+    system_prompt: Optional[str] = Field(None, description="Maxsus tizim ko'rsatmasi / AI Personasi")
+    max_tokens: Optional[int] = Field(4096, ge=128, le=16384, description="Maksimal tokenlar")
+    history_limit: Optional[int] = Field(10, ge=1, le=50, description="Kontekst xotirasi uzunligi")
 
 
 class ConversationResponse(BaseModel):
