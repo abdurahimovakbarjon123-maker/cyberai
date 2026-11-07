@@ -8,6 +8,7 @@ import asyncio
 from typing import AsyncGenerator, List, Dict, Any, Optional
 import httpx
 from backend.config import settings
+from backend.knowledge_engine import generate_smart_response
 
 # Cybersecurity System Prompts for each supported language
 SYSTEM_PROMPTS = {
@@ -356,10 +357,29 @@ def get_malicious_refusal_response(language: str) -> str:
         )
 
 
+async def _fetch_online_ai(prompt: str, language: str) -> Optional[str]:
+    """
+    Attempts to fetch a live real-time AI response from free online inference.
+    Fast 4s timeout ensures zero UI freeze or lag.
+    """
+    import urllib.parse
+    try:
+        clean = prompt[:200].strip()
+        url = f"https://text.pollinations.ai/{urllib.parse.quote(clean)}?model=openai"
+        async with httpx.AsyncClient(timeout=4.0) as client:
+            resp = await client.get(url)
+            if resp.status_code == 200 and len(resp.text) > 8:
+                if "Free limit reached" not in resp.text:
+                    return resp.text.strip()
+    except Exception:
+        pass
+    return None
+
+
 def match_demo_response(prompt: str, language: str) -> str:
     """
-    Provides intelligent educational responses in demo mode.
-    Never pretends to be a real AI model.
+    Provides intelligent educational responses across all domains.
+    Never returns rigid canned repetitive templates.
     """
     lower = prompt.lower()
 
@@ -373,35 +393,8 @@ def match_demo_response(prompt: str, language: str) -> str:
             if re.search(r"(?i)\b" + re.escape(kw) + r"\b", lower) or (len(kw) > 4 and kw in lower):
                 return topic.get(language, topic["uz"])
 
-    # Fallback response explaining capabilities and guidance
-    if language == "uz":
-        content = (
-            "Assalomu alaykum! Men **CYBERAI** — kiberxavfsizlik va axborot himoyasi bo'yicha sun'iy intellekt yordamchingizman.\n\n"
-            "Sizga quyidagi yo'nalishlarda yordam bera olaman:\n"
-            "- 🛡️ **OWASP Top 10** zaifliklari (SQLi, XSS, SSRF, CSRF, IDOR);\n"
-            "- 💻 **Kod auditi**: Python, JavaScript, HTML manba kodlarini tekshirish;\n"
-            "- 🔒 **Tizim himoyasi**: HSTS, CSP, X-Frame-Options, Cookie xavfsizligi;\n"
-            "- ⚙️ **FastAPI/Python**: Xavfsiz autentifikatsiya, JWT va parollarni xeshlash.\n\n"
-            "Qanday savolingiz yoki tahlil qilinadigan kodingiz bor? Bemalol yozing!"
-        )
-    elif language == "ru":
-        content = (
-            "Здравствуйте! Я **CYBERAI** — ваш ассистент по информационной безопасности.\n\n"
-            "Я могу помочь вам с:\n"
-            "- Уязвимостями OWASP Top 10 (SQL-инъекции, XSS, CSRF, SSRF);\n"
-            "- Безопасной разработкой на Python/FastAPI;\n"
-            "- Настройкой заголовков безопасности (HSTS, CSP, X-Frame-Options)."
-        )
-    else:
-        content = (
-            "Greetings! I am **CYBERAI** — your cybersecurity AI assistant.\n\n"
-            "I can assist with:\n"
-            "- OWASP Top 10 vulnerabilities (SQLi, XSS, SSRF);\n"
-            "- Secure code auditing and hardening;\n"
-            "- Web security headers (HSTS, CSP, X-Frame-Options)."
-        )
-
-    return content
+    # Universal Smart Intelligence Engine for any query
+    return generate_smart_response(prompt, [], language)
 
 
 async def stream_ai_response(
@@ -489,12 +482,21 @@ async def stream_ai_response(
             yield err_msg
             return
 
-    # Fallback to Built-in CyberAI Knowledge Engine
-    full_text = match_demo_response(last_user_message, language)
+    # 1. Try real-time free online AI inference first
+    online_text = await _fetch_online_ai(last_user_message, language)
+    if online_text:
+        words = online_text.split(" ")
+        for i, word in enumerate(words):
+            yield word + (" " if i < len(words) - 1 else "")
+            await asyncio.sleep(0.012)
+        return
+
+    # 2. CYBERAI Universal Smart Intelligence Engine
+    full_text = generate_smart_response(last_user_message, messages, language, system_prompt)
     words = full_text.split(" ")
     for i, word in enumerate(words):
         yield word + (" " if i < len(words) - 1 else "")
-        await asyncio.sleep(0.01)
+        await asyncio.sleep(0.012)
 
 
 async def _stream_openai(
@@ -535,27 +537,28 @@ async def _stream_openai(
                 err_text = err_bytes.decode('utf-8', errors='ignore')
                 if "insufficient_quota" in err_text or "credit_balance_exhausted" in err_text:
                     yield (
-                        "💡 **OpenAI API Xabari:** Kiritilgan OpenAI API kalitida hisob balansi (kredit) tugagan (`insufficient_quota`). "
+                        "💡 **API Xabari:** Kiritilgan API kalitida hisob balansi tugagan (`insufficient_quota`). "
                         "Ushbu kalit ishlashi uchun hisobingizni [platform.openai.com/settings/organization/billing](https://platform.openai.com/settings/organization/billing/) orqali to'ldirishingiz mumkin.\n\n"
-                        "Hozir esa savolingizga **CYBERAI** ichki mudofaa intellekti orqali javob beraman:\n\n"
+                        "Hozir esa savolingizga **CYBERAI Universal Intellekt Tizimi** orqali to'liq javob beraman:\n\n"
                     )
                     last_user_message = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
-                    full_text = match_demo_response(last_user_message, language)
+                    full_text = generate_smart_response(last_user_message, messages, language, system_prompt)
                     words = full_text.split(" ")
                     for i, word in enumerate(words):
                         yield word + (" " if i < len(words) - 1 else "")
-                        await asyncio.sleep(0.01)
+                        await asyncio.sleep(0.012)
                     return
                 elif response.status_code == 401:
                     yield (
                         "⚠️ **API Kalit Xatosi (401):** Kiritilgan API kaliti noto'g'ri yoki bekor qilingan.\n\n"
+                        "Savolingizga **CYBERAI Universal Intellekt Tizimi** orqali to'liq javob beraman:\n\n"
                     )
                     last_user_message = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
-                    full_text = match_demo_response(last_user_message, language)
+                    full_text = generate_smart_response(last_user_message, messages, language, system_prompt)
                     words = full_text.split(" ")
                     for i, word in enumerate(words):
                         yield word + (" " if i < len(words) - 1 else "")
-                        await asyncio.sleep(0.01)
+                        await asyncio.sleep(0.012)
                     return
                 else:
                     yield f"[API Xatosi {response.status_code}: {err_text}]"

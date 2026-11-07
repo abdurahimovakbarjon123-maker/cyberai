@@ -441,9 +441,13 @@ function attachMessageActions(bubbleRow, textContent) {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
       <span>Nusxalash</span>
     </button>
+    <button class="action-icon-btn speak-msg-btn" title="Ovozli o'qish">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+      <span>Ovoz</span>
+    </button>
     <button class="action-icon-btn regen-btn" title="Qayta yaratish">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-      <span>Qayta yaratish</span>
+      <span>Qayta</span>
     </button>
   `;
 
@@ -453,6 +457,28 @@ function attachMessageActions(bubbleRow, textContent) {
       copyBtn.querySelector("span").textContent = "Nusxalandi!";
       setTimeout(() => copyBtn.querySelector("span").textContent = "Nusxalash", 2000);
     });
+  });
+
+  const speakBtn = actions.querySelector(".speak-msg-btn");
+  speakBtn.addEventListener("click", () => {
+    if (!('speechSynthesis' in window)) {
+      showToast("Brauzeringiz ovoz sintezini qo'llab-quvvatlamaydi.", "info");
+      return;
+    }
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      speakBtn.querySelector("span").textContent = "Ovoz";
+      return;
+    }
+    // Clean markdown symbols for cleaner speech
+    const cleanSpeechText = textContent.replace(/[*#`_~\[\]]/g, '').replace(/```[\s\S]*?```/g, 'Kod namunasi.');
+    const utterance = new SpeechSynthesisUtterance(cleanSpeechText.slice(0, 1000));
+    utterance.lang = CYBERAI.lang === "ru" ? "ru-RU" : (CYBERAI.lang === "en" ? "en-US" : "uz-UZ");
+    utterance.rate = 1.0;
+    utterance.onend = () => { speakBtn.querySelector("span").textContent = "Ovoz"; };
+    utterance.onerror = () => { speakBtn.querySelector("span").textContent = "Ovoz"; };
+    speakBtn.querySelector("span").textContent = "To'xtatish";
+    window.speechSynthesis.speak(utterance);
   });
 
   const regenBtn = actions.querySelector(".regen-btn");
@@ -560,23 +586,29 @@ function renderWelcomeScreen() {
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#00F5D4" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
       </div>
       <div>
-        <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;">CYBERAI Himoya Yordamchisi</h2>
-        <p style="color: var(--text-secondary); max-width: 540px; font-size: 0.98rem; line-height: 1.6;">
-          Axborot xavfsizligi, OWASP Top 10, Python/FastAPI himoyalangan arxitekturasi va dastur kodi auditiga ixtisoslashgan sun'iy intellekt tizimi.
+        <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;">CYBERAI Super Sun'iy Intellekt</h2>
+        <p style="color: var(--text-secondary); max-width: 580px; font-size: 0.98rem; line-height: 1.6;">
+          Dasturlash (Python, Bot, JS), matematika, fan, umumiy bilimlar va jahon standartidagi kiberxavfsizlik himoyasini birlashtirgan universal AI yordamchi.
         </p>
       </div>
-      <div style="display: flex; flex-wrap: wrap; gap: 0.85rem; justify-content: center; max-width: 700px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 0.85rem; justify-content: center; max-width: 760px;">
+        <button class="btn btn-secondary prompt-chip" onclick="quickPrompt('Python da qanday qilib Telegram bot yaratish mumkin?')">
+          🤖 Python Telegram Bot (aiogram)
+        </button>
         <button class="btn btn-secondary prompt-chip" onclick="quickPrompt('SQL Injection nima va undan qanday himoyalanamiz?')">
-          🛡️ SQL Injection himoyasi
+          🛡️ SQL Injection & OWASP
         </button>
-        <button class="btn btn-secondary prompt-chip" onclick="quickPrompt('FastAPI ilovasida xavfsiz JWT autentifikatsiyani sozlash')">
-          🔑 Xavfsiz JWT va Parollar
+        <button class="btn btn-secondary prompt-chip" onclick="quickPrompt('FastAPI da xavfsiz JWT autentifikatsiyani sozlash')">
+          🔑 Xavfsiz JWT & FastAPI
         </button>
-        <button class="btn btn-secondary prompt-chip" onclick="quickPrompt('XSS zaifliklarining oldini olish choralari')">
-          ⚡ XSS oldini olish
+        <button class="btn btn-secondary prompt-chip" onclick="quickPrompt('25 * 4 + 150 ning yechimi va tushuntirishi')">
+          🧮 Matematik Hisoblash
         </button>
-        <button class="btn btn-secondary prompt-chip" onclick="quickPrompt('Nmap orqali xavfsizlik auditini o\'tkazish tamoyillari')">
-          🔍 Kali Linux audit vositalari
+        <button class="btn btn-secondary prompt-chip" onclick="quickPrompt('Kvant fizikasi nima va kvant kompyuterlar qanday ishlaydi?')">
+          🌌 Kvant Fizikasi & Fan
+        </button>
+        <button class="btn btn-secondary prompt-chip" onclick="quickPrompt('Dasturchilar va himoyachilar haqida ilhomlantiruvchi she\'r yoz')">
+          ✍️ Ijodiy She'r & Matn
         </button>
       </div>
     </div>
