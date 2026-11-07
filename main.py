@@ -41,6 +41,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# Security Headers Middleware (HSTS, CSP, X-Frame-Options, X-Content-Type-Options)
+@app.middleware("http")
+async def add_security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    # HSTS: Strict-Transport-Security (1 year + subdomains + preload)
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+    # CSP: Content-Security-Policy (XSS & injection defense)
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; "
+        "img-src 'self' data: https:; "
+        "font-src 'self' data: https:; "
+        "connect-src 'self' https: wss:; "
+        "frame-ancestors 'none';"
+    )
+    # X-Frame-Options: Clickjacking defense
+    response.headers["X-Frame-Options"] = "DENY"
+    # X-Content-Type-Options: MIME-sniffing defense
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    # Referrer Policy
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    # Permissions Policy
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    return response
+
 # Include API Routers
 app.include_router(auth.router)
 app.include_router(chat.router)

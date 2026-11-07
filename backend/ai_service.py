@@ -57,6 +57,94 @@ SYSTEM_PROMPTS = {
 
 # DEMO KNOWLEDGE BASE RESPONSES FOR OFFLINE / UNCONFIGURED API KEY MODE
 DEMO_TOPICS = {
+    "how_are_you": {
+        "keywords": ["qaleysan", "qalaysan", "qalesiz", "qandaysiz", "ishlar qalay", "ahvol", "kayfiyat", "tinchmi", "как дела", "how are you"],
+        "uz": (
+            "Rahmat, ajoyib! 🛡️ Barcha kiberxavfsizlik himoya modullarim to'liq shay holatda.\n\n"
+            "Sizning tizimlaringiz, ma'lumotlar bazangiz va dasturlaringiz xavfsizligini ta'minlashga tayyorman. "
+            "Kiberxavfsizlik bo'yicha qanday mavzuni muhokama qilamiz?"
+        ),
+        "en": (
+            "I'm functioning at peak security status! 🛡️ All defensive modules are operational and ready to assist you. How are you?"
+        ),
+        "ru": (
+            "Спасибо, все отлично! 🛡️ Все модули защиты активны и готовы к работе. Что вас интересует сегодня?"
+        )
+    },
+    "greetings": {
+        "keywords": ["salom", "assalom", "privet", "hello", "hi", "hey", "salomaleykum"],
+        "uz": (
+            "Va alaykum assalom! Xush kelibsiz! 👋\n\n"
+            "Men **CYBERAI** — axborot xavfsizligi, kod auditi va tizim mudofaasi bo'yicha sun'iy intellekt yordamchingizman.\n\n"
+            "Bugun sizga qanday yordam bera olaman? Masalan:\n"
+            "- Python/JavaScript kodingizni zaifliklarga tekshirish;\n"
+            "- Veb-saytingiz xavfsizlik sarlavhalarini mustahkamlash;\n"
+            "- OWASP Top 10 zaifliklaridan himoyalanish bo'yicha maslahatlar."
+        ),
+        "en": (
+            "Hello! Welcome to CYBERAI! 👋\n\n"
+            "I am your defensive cybersecurity AI assistant. How can I help you protect your systems today?"
+        ),
+        "ru": (
+            "Здравствуйте! Добро пожаловать в CYBERAI! 👋\n\n"
+            "Я ваш ассистент по кибербезопасности. Чем могу помочь вам сегодня?"
+        )
+    },
+    "who_are_you": {
+        "keywords": ["kimsan", "kim bu", "o'zing haqida", "nima qila olasan", "vazifang nima", "sen kimsan", "кто ты", "who are you"],
+        "uz": (
+            "Men **CYBERAI** — professional axborot xavfsizligi, himoyalangan dasturlash va kiberxavfsizlik auditi bo'yicha AI yordamchisiman.\n\n"
+            "Asosiy imkoniyatlarim:\n"
+            "1. **Kod Tahlili**: Python, JS va HTML kodlaridagi zaifliklarni (SQLi, XSS, RCE, maxfiy kalitlar) aniqlash.\n"
+            "2. **Sayt Auditi**: HSTS, CSP, X-Frame-Options va xavfsizlik sarlavhalari holatini tekshirish.\n"
+            "3. **Maslahat va Ta'lim**: OWASP Top 10, Kali Linux himoya vositalari va FastAPI xavfsiz arxitekturasi."
+        ),
+        "en": (
+            "I am **CYBERAI** — a specialized AI assistant for defensive cybersecurity, static code analysis, and web security auditing."
+        ),
+        "ru": (
+            "Я **CYBERAI** — специализированный ИИ-ассистент по защите информации, аудиту кода и безопасности веб-приложений."
+        )
+    },
+    "thanks": {
+        "keywords": ["rahmat", "katta rahmat", "tashakkur", "spasibo", "thank you", "thanks", "minnatdorman", "raxmat"],
+        "uz": (
+            "Arzimaydi! Tizimingiz doimo mustahkam va xavfsiz bo'lishidan xursandman! 🛡️\n\n"
+            "Agar yana biror kod yoki xavfsizlik masalasida savollaringiz paydo bo'lsa, bemalol murojaat qiling."
+        ),
+        "en": "You're welcome! Stay secure and let me know if you need any more cybersecurity assistance! 🛡️",
+        "ru": "Пожалуйста! Надежной защиты вашим системам. Обращайтесь в любое время! 🛡️"
+    },
+    "security_headers": {
+        "keywords": ["hsts", "csp", "x-frame-options", "nosniff", "security headers", "sarlavha", "sarlavhalar"],
+        "uz": (
+            "### HTTP Xavfsizlik Sarlavhalari (Security Headers)\n\n"
+            "Veb-ilovangizni zamonaviy kiberhujumlardan himoya qilish uchun quyidagi 4 ta asosiy sarlavha shart:\n\n"
+            "1. **HSTS (`Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`)**:\n"
+            "   Brauzerga sayt bilan faqat shifrlangan HTTPS protokoli orqali bog'lanishni majburiy qiladi (SSL Stripping va Man-in-the-Middle hujumlaridan himoyalaydi).\n\n"
+            "2. **CSP (`Content-Security-Policy: default-src 'self' ...; frame-ancestors 'none'`)**:\n"
+            "   Faqat ruxsat berilgan manbalardan skriptlar va kontent yuklanishini ta'minlaydi (XSS va ma'lumotlarni o'g'irlashdan himoyalaydi).\n\n"
+            "3. **X-Frame-Options (`X-Frame-Options: DENY`)**:\n"
+            "   Saytingizni `<iframe>` ichiga joylashtirishni taqiqlaydi (Clickjacking / UI Redressing hujumlaridan saqlaydi).\n\n"
+            "4. **X-Content-Type-Options (`X-Content-Type-Options: nosniff`)**:\n"
+            "   Brauzerning MIME turini o'zboshimchalik bilan taxmin qilishini to'xtatadi (MIME Sniffing zaifligini bartaraf etadi).\n\n"
+            "*CYBERAI serverida ushbu sarlavhalarning barchasi to'liq faollashtirilgan!*"
+        ),
+        "en": (
+            "### Core HTTP Security Headers\n\n"
+            "1. **HSTS**: Forces secure HTTPS connections against SSL stripping.\n"
+            "2. **CSP**: Prevents Cross-Site Scripting (XSS) and code injection.\n"
+            "3. **X-Frame-Options: DENY**: Protects against Clickjacking attacks.\n"
+            "4. **X-Content-Type-Options: nosniff**: Eliminates MIME-sniffing vulnerabilities."
+        ),
+        "ru": (
+            "### Основные заголовки безопасности HTTP\n\n"
+            "1. **HSTS**: Принудительный HTTPS для защиты от перехвата трафика.\n"
+            "2. **CSP**: Защита от XSS и инъекций стороннего кода.\n"
+            "3. **X-Frame-Options: DENY**: Защита от Clickjacking.\n"
+            "4. **X-Content-Type-Options: nosniff**: Предотвращение уязвимостей MIME-sniffing."
+        )
+    },
     "sql_injection": {
         "keywords": ["sql", "injection", "sqli", "injeksiya", "veritabani"],
         "uz": (
@@ -278,39 +366,39 @@ def match_demo_response(prompt: str, language: str) -> str:
     if check_malicious_intent(lower):
         return get_malicious_refusal_response(language)
 
-    # Check topic matches
+    import re
+    # Check topic matches with word boundary or substring
     for _, topic in DEMO_TOPICS.items():
-        if any(kw in lower for kw in topic["keywords"]):
-            resp = topic.get(language, topic["uz"])
-            return resp
+        for kw in topic["keywords"]:
+            if re.search(r"(?i)\b" + re.escape(kw) + r"\b", lower) or (len(kw) > 4 and kw in lower):
+                return topic.get(language, topic["uz"])
 
     # Fallback response explaining capabilities and guidance
     if language == "uz":
         content = (
-            "### Assalomu alaykum! Men CYBERAI — kiberxavfsizlik va axborot himoyasi bo'yicha sun'iy intellekt yordamchingizman.\n\n"
-            "Men sizga quyidagi yo'nalishlar bo'yicha professional yordam bera olaman:\n\n"
-            "- 🛡️ **OWASP Top 10** zaifliklari (SQL Injection, XSS, SSRF, Broken Access Control);\n"
-            "- 💻 **Xavfsiz dasturlash**: Python, JavaScript, HTML kodlarini himoyalash va audit o'tkazish;\n"
-            "- 🔒 **FastAPI va Web xavfsizligi**: JWT, parollarni xeshlash, CORS, rate limiting;\n"
-            "- 🔍 **Kiberxavfsizlik vositalari**: Nmap, Wireshark, Burp Suite (laboratoriya maqsadlarida);\n"
-            "- ⚙️ **Tizim himoyasi**: HTTP xavfsizlik sarlavhalari, SSL/TLS, kuki himoyasi.\n\n"
-            "Menga aniq savol bering, masalan: *\"SQL injection nima va undan qanday himoyalanish mumkin?\"* yoki *\"XSS dan qanday himoyalanamiz?\"*"
+            "Assalomu alaykum! Men **CYBERAI** — kiberxavfsizlik va axborot himoyasi bo'yicha sun'iy intellekt yordamchingizman.\n\n"
+            "Sizga quyidagi yo'nalishlarda yordam bera olaman:\n"
+            "- 🛡️ **OWASP Top 10** zaifliklari (SQLi, XSS, SSRF, CSRF, IDOR);\n"
+            "- 💻 **Kod auditi**: Python, JavaScript, HTML manba kodlarini tekshirish;\n"
+            "- 🔒 **Tizim himoyasi**: HSTS, CSP, X-Frame-Options, Cookie xavfsizligi;\n"
+            "- ⚙️ **FastAPI/Python**: Xavfsiz autentifikatsiya, JWT va parollarni xeshlash.\n\n"
+            "Qanday savolingiz yoki tahlil qilinadigan kodingiz bor? Bemalol yozing!"
         )
     elif language == "ru":
         content = (
-            "### Здравствуйте! Я CYBERAI — ваш ассистент по кибербезопасности.\n\n"
-            "Вы можете задавать вопросы по:\n"
-            "- Уязвимостям OWASP Top 10 (SQL-инъекции, XSS, CSRF, SSRF);\n"
-            "- Безопасной разработке на Python и FastAPI;\n"
-            "- Защите веб-приложений и настройке заголовков безопасности."
+            "Здравствуйте! Я **CYBERAI** — ваш ассистент по информационной безопасности.\n\n"
+            "Я могу помочь вам с:\n"
+            "- Уязвимостями OWASP Top 10 (SQL-инъекции, XSS, CSRF, SSRF);\n"
+            "- Безопасной разработкой на Python/FastAPI;\n"
+            "- Настройкой заголовков безопасности (HSTS, CSP, X-Frame-Options)."
         )
     else:
         content = (
-            "### Greetings! I am CYBERAI — your cybersecurity AI assistant.\n\n"
-            "Feel free to ask about:\n"
-            "- OWASP Top 10 vulnerabilities (SQLi, XSS, SSRF, Auth);\n"
-            "- Secure software development in Python and FastAPI;\n"
-            "- Defensive network and web security principles."
+            "Greetings! I am **CYBERAI** — your cybersecurity AI assistant.\n\n"
+            "I can assist with:\n"
+            "- OWASP Top 10 vulnerabilities (SQLi, XSS, SSRF);\n"
+            "- Secure code auditing and hardening;\n"
+            "- Web security headers (HSTS, CSP, X-Frame-Options)."
         )
 
     return content
@@ -443,9 +531,35 @@ async def _stream_openai(
     async with httpx.AsyncClient(timeout=60.0) as client:
         async with client.stream("POST", url, headers=headers, json=body) as response:
             if response.status_code != 200:
-                err_text = await response.aread()
-                yield f"[API Xatosi {response.status_code}: {err_text.decode('utf-8', errors='ignore')}]"
-                return
+                err_bytes = await response.aread()
+                err_text = err_bytes.decode('utf-8', errors='ignore')
+                if "insufficient_quota" in err_text or "credit_balance_exhausted" in err_text:
+                    yield (
+                        "💡 **OpenAI API Xabari:** Kiritilgan OpenAI API kalitida hisob balansi (kredit) tugagan (`insufficient_quota`). "
+                        "Ushbu kalit ishlashi uchun hisobingizni [platform.openai.com/settings/organization/billing](https://platform.openai.com/settings/organization/billing/) orqali to'ldirishingiz mumkin.\n\n"
+                        "Hozir esa savolingizga **CYBERAI** ichki mudofaa intellekti orqali javob beraman:\n\n"
+                    )
+                    last_user_message = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
+                    full_text = match_demo_response(last_user_message, language)
+                    words = full_text.split(" ")
+                    for i, word in enumerate(words):
+                        yield word + (" " if i < len(words) - 1 else "")
+                        await asyncio.sleep(0.01)
+                    return
+                elif response.status_code == 401:
+                    yield (
+                        "⚠️ **API Kalit Xatosi (401):** Kiritilgan API kaliti noto'g'ri yoki bekor qilingan.\n\n"
+                    )
+                    last_user_message = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
+                    full_text = match_demo_response(last_user_message, language)
+                    words = full_text.split(" ")
+                    for i, word in enumerate(words):
+                        yield word + (" " if i < len(words) - 1 else "")
+                        await asyncio.sleep(0.01)
+                    return
+                else:
+                    yield f"[API Xatosi {response.status_code}: {err_text}]"
+                    return
 
             async for line in response.aiter_lines():
                 if not line or not line.startswith("data: "):
