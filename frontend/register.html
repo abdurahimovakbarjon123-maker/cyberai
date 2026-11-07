@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ro'yxatdan O'tish — CYBERAI</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300E5A8'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+</head>
+<body>
+  <div class="auth-page-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="logo-wrapper">
+          <svg class="logo-icon" viewBox="0 0 24 24">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span class="logo-text">CYBERAI</span>
+        </div>
+        <h1 class="auth-title">Yangi Akkaunt Yaratish</h1>
+        <p class="auth-subtitle">Professional kiberhimoya tizimiga qo'shiling</p>
+      </div>
+
+      <div id="auth-error-banner" style="display: none; background: rgba(255, 75, 114, 0.15); border: 1px solid var(--severity-critical); color: var(--severity-critical); padding: 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; margin-bottom: 1.25rem;"></div>
+
+      <form id="register-form">
+        <div class="form-group">
+          <label class="form-label" for="reg-username">Foydalanuvchi nomi</label>
+          <input type="text" id="reg-username" class="form-input" placeholder="kamida 3 belgi" required autocomplete="username">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reg-email">Elektron Pochta</label>
+          <input type="email" id="reg-email" class="form-input" placeholder="nomingiz@misol.uz" required autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reg-password">Parol (kamida 8 belgi, harf va raqam)</label>
+          <input type="password" id="reg-password" class="form-input" placeholder="••••••••" required autocomplete="new-password">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reg-confirm-password">Parolni tasdiqlash</label>
+          <input type="password" id="reg-confirm-password" class="form-input" placeholder="••••••••" required autocomplete="new-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
+          Ro'yxatdan O'tish
+        </button>
+      </form>
+
+      <div style="text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+        Akkauntingiz bormi?
+        <a href="/login" style="font-weight: 600; color: var(--accent-secondary);">Kirish</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/auth.js"></script>
+</body>
+</html>
