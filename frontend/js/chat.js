@@ -531,17 +531,17 @@ function renderWelcomeScreen() {
   if (!chatMessages) return;
 
   chatMessages.innerHTML = `
-    <div id="welcome-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; gap: 1.5rem; padding: 2rem 1rem;">
-      <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(0, 229, 168, 0.1); display: flex; align-items: center; justify-content: center; border: 1px solid var(--accent-primary);">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#00E5A8" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+    <div id="welcome-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; gap: 1.5rem; padding: 2.5rem 1rem;">
+      <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, rgba(0, 245, 212, 0.2), rgba(139, 92, 246, 0.25)); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(0, 245, 212, 0.45); box-shadow: 0 0 25px rgba(0, 245, 212, 0.3);">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#00F5D4" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
       </div>
       <div>
-        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">CYBERAI Himoya Yordamchisi</h2>
-        <p style="color: var(--text-secondary); max-width: 500px; font-size: 0.95rem;">
-          Axborot xavfsizligi, OWASP Top 10, Python/FastAPI xavfsiz arxitekturasi va manba kodi auditiga ixtisoslashgan sun'iy intellekt tizimi.
+        <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;">CYBERAI Himoya Yordamchisi</h2>
+        <p style="color: var(--text-secondary); max-width: 540px; font-size: 0.98rem; line-height: 1.6;">
+          Axborot xavfsizligi, OWASP Top 10, Python/FastAPI himoyalangan arxitekturasi va dastur kodi auditiga ixtisoslashgan sun'iy intellekt tizimi.
         </p>
       </div>
-      <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; max-width: 680px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 0.85rem; justify-content: center; max-width: 700px;">
         <button class="btn btn-secondary prompt-chip" onclick="quickPrompt('SQL Injection nima va undan qanday himoyalanamiz?')">
           🛡️ SQL Injection himoyasi
         </button>

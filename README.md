@@ -2,7 +2,22 @@
 
 **CYBERAI** — zamonaviy sun'iy intellekt, axborot xavfsizligi va dasturiy ta'minot mudofaasi bo'yicha to'liq ishchi (full-stack) professional kiberxavfsizlik platformasi.
 
-Ilova quyuq zamonaviy kiberxavfsizlik mavzusidagi (premium dark-theme) interfeysga ega bo'lib, **FastAPI**, **SQLAlchemy**, **SQLite**, **PyJWT**, **Vanilla Modern JavaScript** va moslashuvchan **AI Provider arxitekturasi** (OpenAI, lokal Ollama va oflayn Demo rejim) asosida qurilgan.
+Ilova premium shishasimon (**Glassmorphism / Glass UI**) kiberxavfsizlik interfeysi, **FastAPI**, **SQLAlchemy**, **SQLite**, **PyJWT**, **Modern Vanilla JavaScript** va moslashuvchan **AI Provider arxitekturasi** (OpenAI, lokal Ollama va oflayn Demo rejim) asosida qurilgan.
+
+---
+
+## 🌐 24/7 BEPUL CLOUD HOSTING (Kompyuter o'chirilganda ham 24/7 ishlash)
+
+Ilovangiz kompyuteringiz o'chiq bo'lganda ham internetda 24 soat to'xtovsiz ishlashi uchun quyidagi bepul bulutli xizmatlardan biriga 1 ta klik bilan ulab qo'yishingiz mumkin:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/abdurahimovakbarjon123-maker/cyberai)
+
+### 1-Usul: Render orqali (100% Bepul va Oson):
+1. **[Render.com](https://render.com)** saytiga kiring va GitHub hisobingiz (`abdurahimovakbarjon123-maker`) orqali kiring.
+2. Yuqoridagi **"Deploy to Render"** tugmasini bosing yoki **"New +" -> "Web Service"** ni tanlang.
+3. Repozitoriy sifatida `cyberai` ni tanlang.
+4. Render avtomatik ravishda `render.yaml` va `Dockerfile` ni tanib, serverni ishga tushiradi.
+5. Tayyor! Sizga `https://cyberai-xxxx.onrender.com` doimiy bepul HTTPS domen beriladi va u kompyuteringiz o'chiq bo'lsa ham **24/7** ishlab turadi!
 
 ---
 
