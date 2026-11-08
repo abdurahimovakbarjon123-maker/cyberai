@@ -425,6 +425,27 @@ async def stream_ai_response(
             await asyncio.sleep(0.015)
         return
 
+    # Check Google Gemini Provider
+    if prov in ("gemini", "google") or ("gemini" in (model or "").lower()):
+        req_model = model or settings.GEMINI_MODEL or "gemini-2.0-flash"
+        gemini_key = user_key or settings.GEMINI_API_KEY
+        try:
+            async for chunk in _stream_gemini(
+                messages,
+                model=req_model,
+                language=language,
+                api_key=gemini_key,
+                temperature=temperature,
+                system_prompt=system_prompt,
+                max_tokens=max_tokens
+            ):
+                yield chunk
+            return
+        except Exception as e:
+            err_msg = f"\n\n[Google Gemini Xatosi: {str(e)}]"
+            yield err_msg
+            return
+
     # Check Cloud API providers (OpenAI, DeepSeek, Groq, Custom OpenAI-compatible)
     if prov in ("openai", "deepseek", "groq", "custom") and user_key:
         req_base_url = base_url
@@ -497,6 +518,113 @@ async def stream_ai_response(
     for i, word in enumerate(words):
         yield word + (" " if i < len(words) - 1 else "")
         await asyncio.sleep(0.012)
+
+
+async def _stream_gemini(
+    messages: List[Dict[str, str]],
+    model: str = "gemini-2.0-flash",
+    language: str = "uz",
+    api_key: Optional[str] = None,
+    temperature: float = 0.7,
+    system_prompt: Optional[str] = None,
+    max_tokens: int = 4096
+) -> AsyncGenerator[str, None]:
+    """
+    Streams response from Google Gemini API (gemini-2.0-flash, gemini-1.5-flash, gemini-1.5-pro).
+    Uses official Google Generative Language REST SSE stream.
+    """
+    key = api_key or settings.GEMINI_API_KEY or settings.AI_API_KEY
+    if not key:
+        yield (
+            "🔑 **Google Gemini API Kaliti Kiritilmagan:**\n\n"
+            "Gemini AI bilan to'liq muloqot qilish uchun bepul API kalit kerak:\n"
+            "1. [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) sahifasiga kiring (Google hisobingiz orqali);\n"
+            "2. **'Create API key'** tugmasini bosib bepul kalit oling;\n"
+            "3. O'ng yuqoridagi **'Sozlamalar'** ⚙️ tugmasini bosib, **'API Kalit'** maydoniga joylang va saqlang.\n\n"
+            "---\n\n"
+        )
+        last_msg = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
+        full_text = generate_smart_response(last_msg, messages, language, system_prompt)
+        words = full_text.split(" ")
+        for i, word in enumerate(words):
+            yield word + (" " if i < len(words) - 1 else "")
+            await asyncio.sleep(0.012)
+        return
+
+    # Clean model identifier
+    target_model = model.strip() if model else "gemini-2.0-flash"
+    if not target_model.startswith("gemini-"):
+        target_model = "gemini-2.0-flash"
+
+    base_sys = SYSTEM_PROMPTS.get(language, SYSTEM_PROMPTS["uz"])
+    final_sys = f"{base_sys}\n\nQO'SHIMCHA KO'RSATMA:\n{system_prompt}" if system_prompt else base_sys
+
+    # Convert conversation messages to Gemini contents structure
+    gemini_contents = []
+    for msg in messages:
+        role = "model" if msg["role"] == "assistant" else "user"
+        content_text = msg.get("content", "")
+        if content_text:
+            gemini_contents.append({
+                "role": role,
+                "parts": [{"text": content_text}]
+            })
+
+    if not gemini_contents:
+        last_msg = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
+        gemini_contents = [{"role": "user", "parts": [{"text": last_msg or "Salom"}]}]
+
+    body = {
+        "contents": gemini_contents,
+        "systemInstruction": {
+            "parts": [{"text": final_sys}]
+        },
+        "generationConfig": {
+            "temperature": float(temperature),
+            "maxOutputTokens": int(max_tokens)
+        }
+    }
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{target_model}:streamGenerateContent?alt=sse&key={key}"
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        async with client.stream("POST", url, json=body, headers={"Content-Type": "application/json"}) as resp:
+            if resp.status_code != 200:
+                err_bytes = await resp.aread()
+                err_text = err_bytes.decode("utf-8", errors="ignore")
+                if resp.status_code in (400, 401, 403):
+                    yield (
+                        f"⚠️ **Google Gemini Xatosi ({resp.status_code}):** API kalit noto'g'ri yoki ruxsat berilmagan.\n\n"
+                        "Iltimos, [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) sahifasidan yangi bepul kalit oling.\n\n"
+                        "---\n\n"
+                    )
+                    last_msg = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
+                    full_text = generate_smart_response(last_msg, messages, language, system_prompt)
+                    words = full_text.split(" ")
+                    for i, word in enumerate(words):
+                        yield word + (" " if i < len(words) - 1 else "")
+                        await asyncio.sleep(0.012)
+                    return
+                else:
+                    yield f"[Gemini API Xatosi {resp.status_code}: {err_text}]"
+                    return
+
+            async for line in resp.aiter_lines():
+                if not line or not line.startswith("data: "):
+                    continue
+                data_str = line[6:].strip()
+                try:
+                    data = json.loads(data_str)
+                    candidates = data.get("candidates", [])
+                    if candidates:
+                        content = candidates[0].get("content", {})
+                        parts = content.get("parts", [])
+                        for p in parts:
+                            text_piece = p.get("text", "")
+                            if text_piece:
+                                yield text_piece
+                except Exception:
+                    continue
 
 
 async def _stream_openai(
@@ -643,14 +771,15 @@ def get_ai_status() -> Dict[str, Any]:
     Returns AI provider diagnostic status for admin panel.
     """
     provider = settings.AI_PROVIDER.lower()
-    has_key = bool(settings.AI_API_KEY)
-    masked_key = (settings.AI_API_KEY[:4] + "..." + settings.AI_API_KEY[-4:]) if len(settings.AI_API_KEY) > 8 else "Kiritilmagan"
+    active_key = settings.GEMINI_API_KEY if provider == "gemini" else settings.AI_API_KEY
+    has_key = bool(active_key)
+    masked_key = (active_key[:4] + "..." + active_key[-4:]) if len(active_key) > 8 else "Kiritilmagan"
 
     return {
         "provider": provider,
-        "model": settings.AI_MODEL,
-        "base_url": settings.AI_BASE_URL if provider == "openai" else settings.OLLAMA_BASE_URL,
+        "model": settings.GEMINI_MODEL if provider == "gemini" else settings.AI_MODEL,
+        "base_url": "https://generativelanguage.googleapis.com" if provider == "gemini" else (settings.AI_BASE_URL if provider == "openai" else settings.OLLAMA_BASE_URL),
         "has_api_key": has_key,
         "masked_key": masked_key if has_key else "Mavjud emas",
-        "mode": "Haqiqiy API" if (provider == "openai" and has_key) or provider == "ollama" else "Demo Rejimi (Lokal bilimlar bazasi)"
+        "mode": "Haqiqiy Gemini API" if provider == "gemini" and has_key else ("Haqiqiy API" if (provider in ("openai", "groq", "deepseek") and has_key) or provider == "ollama" else "CyberAI Smart Core")
     }

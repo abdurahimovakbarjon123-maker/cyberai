@@ -5,8 +5,8 @@
 
 // Default AI Settings
 const DEFAULT_AI_SETTINGS = {
-  provider: "cyberai",
-  model: "gpt-4o-mini",
+  provider: "gemini",
+  model: "gemini-2.0-flash",
   apiKey: "",
   baseUrl: "",
   persona: "senior_architect",

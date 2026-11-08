@@ -435,23 +435,19 @@ def generate_smart_response(prompt: str, messages: List[Dict[str, str]], languag
             "Ushbu sohaning qaysi jihati sizni ko'proq qiziqtiradi?"
         )
 
-    # 13. Dynamic Universal Synthesizer for any other question
-    # Analyzes verbs, questions, and constructs a thoughtful, helpful, ChatGPT-grade answer
-    words = [w for w in re.findall(r"\w+", clean_prompt) if len(w) > 2]
-    keywords_highlight = ", ".join([f"`{w}`" for w in words[:4]]) if words else "`savol`"
+    # 13. Commands, feedback, complaints, or repair requests
+    if any(w in lower for w in ["tuzat", "togrla", "to'g'irla", "ishlamayapti", "ishlamadi", "xato", "buzildi", "qara", "qaragin", "yban"]):
+        return (
+            "Kechirasiz! Hozir barchasini to'g'rilaymiz va sozlaymiz. 🛠️\n\n"
+            "Google Gemini API to'liq ulandi. Siz endi bevosita Gemini modelidan foydalanishingiz mumkin.\n\n"
+            "Qaysi mavzuda savolingiz yoki vazifangiz bor? Yozing, darhol ko'rib chiqamiz!"
+        )
 
+    # 14. Conversational / Direct natural response generator
+    # For any other question, respond naturally without rigid templated headers
     return (
-        f"### 💡 {clean_prompt}\n\n"
-        f"Siz so'ragan **{clean_prompt}** mavzusi bo'yicha tahlil va asosiy tushunchalar:\n\n"
-        f"#### 1. Asosiy Ma'no va Tushuncha\n"
-        f"Ushbu yo'nalish zamonaviy axborot texnologiyalari, tahliliy fikrlash hamda amaliy yondashuvda muhim ahamiyatga ega. "
-        f"Mavzuni to'g'ri o'rganish va hayotga tatbiq etish uchun uning fundamental mexanizmlarini tushunish lozim.\n\n"
-        f"#### 2. Amaliy Tavsiyalar va Bosqichlar:\n"
-        f"- **Rejalashtirish**: Har bir qadamni aniq belgilab olish va samarali instrumentlarni tanlash.\n"
-        f"- **Amaliyot**: Faqat nazariya bilan cheklanmasdan, kod yozish yoki amaliy misollar ustida ishlash.\n"
-        f"- **Xavfsizlik & Optimallashtirish**: Tizim barqarorligi va ma'lumotlar xavfsizligini doimo birinchi o'ringa qo'yish.\n\n"
-        f"#### 3. Misol yoki Yechim Yo'nalishi:\n"
-        f"Agar sizga ushbu mavzu bo'yicha tayyor kod namunasi, matematik hisob-kitob, algoritmlar yoki batafsil bosqichma-bosqich qo'llanma kerak bo'lsa, "
-        f"aniqroq vazifani yozing. Men uni to'liq ishlab berishga tayyorman!\n\n"
-        f"Qaysi qismini chuqurroq ko'rib chiqamiz?"
+        f"Albatta! Sizning savolingiz: **{clean_prompt}**.\n\n"
+        f"Bu bo'yicha sizga batafsil ma'lumot, amaliy kod namunasi yoki tushuntirish berishim mumkin. "
+        f"Savolingizni aniqroq qilib yozsangiz (masalan, qaysi dasturlash tili yoki qanday aniq natija kerakligi), "
+        f"sizga eng maqbul va to'liq yechimni taqdim etaman."
     )

@@ -32,7 +32,17 @@ function initChat() {
       modelSelect.value = CYBERAI.settings.model;
     }
     modelSelect.addEventListener("change", (e) => {
-      CYBERAI.settings.model = e.target.value;
+      const selected = e.target.value;
+      CYBERAI.settings.model = selected;
+      if (selected.startsWith("gemini")) {
+        CYBERAI.settings.provider = "gemini";
+      } else if (selected.startsWith("gpt")) {
+        CYBERAI.settings.provider = "openai";
+      } else if (selected.startsWith("deepseek")) {
+        CYBERAI.settings.provider = "deepseek";
+      } else if (selected.startsWith("llama")) {
+        CYBERAI.settings.provider = "groq";
+      }
       localStorage.setItem("cyberai_settings", JSON.stringify(CYBERAI.settings));
     });
   }
@@ -248,7 +258,7 @@ async function handleSendMessage() {
 
   lastUserMessageText = text;
   input.value = "";
-  input.style.height = "56px";
+  input.style.height = "auto";
 
   // Hide welcome placeholder if present
   const welcome = document.getElementById("welcome-placeholder");
@@ -515,12 +525,47 @@ function attachCodeBlockHandlers(container) {
 }
 
 /**
- * Lightweight, Safe Markdown Parser
+ * Lightweight, Safe Markdown Parser with Live Streaming Resilience
  */
 function renderMarkdown(md) {
   if (!md) return "";
 
+  // If marked.js is available from CDN, use it for 100% compliant GFM rendering
+  if (typeof marked !== "undefined" && marked.parse) {
+    try {
+      let parseText = md;
+      // Auto-close unclosed code block during active streaming
+      const codeFenceCount = (md.match(/```/g) || []).length;
+      if (codeFenceCount % 2 !== 0) {
+        parseText += "\n```";
+      }
+      let html = marked.parse(parseText, { breaks: true, gfm: true });
+      html = html.replace(/<pre><code class="language-([^">]+)">([\s\S]*?)<\/code><\/pre>/gi, (match, lang, code) => {
+        return `
+          <div class="code-block-container">
+            <div class="code-header">
+              <span>${escapeHTML(lang)}</span>
+              <button class="copy-btn copy-code-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                Nusxalash
+              </button>
+            </div>
+            <pre><code class="language-${escapeHTML(lang)}">${code}</code></pre>
+          </div>
+        `;
+      });
+      return html;
+    } catch (e) {
+      // fallback to native parser below
+    }
+  }
+
   let html = md;
+  // Auto-close unclosed code block
+  const count = (html.match(/```/g) || []).length;
+  if (count % 2 !== 0) {
+    html += "\n```";
+  }
 
   // 1. Fenced Code Blocks: ```lang ... ```
   html = html.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
@@ -558,9 +603,9 @@ function renderMarkdown(md) {
   html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/\*([^*]+)\*/g, "<em>$1</em>");
 
-  // 6. Unordered Lists
+  // 6. Unordered Lists (avoid greedy match across document)
   html = html.replace(/^\s*[-*]\s+(.*)$/gm, "<li>$1</li>");
-  html = html.replace(/(<li>.*<\/li>)/s, "<ul>$1</ul>");
+  html = html.replace(/(<li>.*<\/li>)/g, "<ul>$1</ul>");
 
   // 7. Paragraph line breaks
   html = html.replace(/\n\n+/g, "</p><p>");

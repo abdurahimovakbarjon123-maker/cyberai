@@ -22,12 +22,14 @@ class Settings(BaseModel):
     DEBUG: bool = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
 
     # AI Configuration
-    # Supported: 'openai', 'ollama', 'demo'
-    AI_PROVIDER: str = os.getenv("AI_PROVIDER", "demo").lower()
+    # Supported: 'gemini', 'openai', 'deepseek', 'groq', 'ollama', 'cyberai'
+    AI_PROVIDER: str = os.getenv("AI_PROVIDER", "gemini").lower()
     AI_API_KEY: str = os.getenv("AI_API_KEY", "")
-    AI_MODEL: str = os.getenv("AI_MODEL", "gpt-4o-mini")
+    AI_MODEL: str = os.getenv("AI_MODEL", "gemini-2.0-flash")
     AI_BASE_URL: str = os.getenv("AI_BASE_URL", "https://api.openai.com/v1")
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", os.getenv("AI_API_KEY", ""))
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'cyberai.db'}")
