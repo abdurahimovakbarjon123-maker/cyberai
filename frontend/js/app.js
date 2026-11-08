@@ -431,8 +431,8 @@ function setupSettingsModal() {
 
   function syncFormWithSettings() {
     const s = CYBERAI.settings;
-    if (providerSelect) providerSelect.value = s.provider || "cyberai";
-    if (modelInput) modelInput.value = s.model || "gpt-4o-mini";
+    if (providerSelect) providerSelect.value = s.provider || "gemini";
+    if (modelInput) modelInput.value = s.model || "gemini-2.0-flash";
     if (apiKeyInput) apiKeyInput.value = s.apiKey || "";
     if (baseUrlInput) baseUrlInput.value = s.baseUrl || "";
     if (systemPromptInput) systemPromptInput.value = s.systemPrompt || PERSONA_PROMPTS[s.persona] || "";
@@ -526,7 +526,10 @@ function setupSettingsModal() {
   if (providerSelect && modelInput) {
     providerSelect.addEventListener("change", () => {
       const p = providerSelect.value;
-      if (p === "deepseek") {
+      if (p === "gemini") {
+        modelInput.value = "gemini-2.0-flash";
+        if (baseUrlInput) baseUrlInput.placeholder = "Google Generative Language API";
+      } else if (p === "deepseek") {
         modelInput.value = "deepseek-chat";
         if (baseUrlInput) baseUrlInput.placeholder = "https://api.deepseek.com/v1";
       } else if (p === "groq") {
@@ -539,7 +542,7 @@ function setupSettingsModal() {
         modelInput.value = "llama3";
         if (baseUrlInput) baseUrlInput.placeholder = "http://localhost:11434";
       } else if (p === "cyberai") {
-        modelInput.value = "gpt-4o-mini";
+        modelInput.value = "gemini-2.0-flash";
       }
     });
   }

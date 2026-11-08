@@ -379,6 +379,31 @@ def generate_smart_response(prompt: str, messages: List[Dict[str, str]], languag
             "Zamonaviy loyihalarda **SQLAlchemy**, **Django ORM** yoki **Prisma** kabi ORM kutubxonalaridan foydalanish SQL inyeksiyalarni avtomatik tarzda 99% bartaraf etadi."
         )
 
+    # 8.1 Cybersecurity: XSS (Cross-Site Scripting)
+    if any(kw in lower for kw in ["xss", "cross-site scripting", "innerhtml"]):
+        return (
+            "### 🛡️ XSS (Cross-Site Scripting) va Undan Himoyalanish\n\n"
+            "**XSS (Cross-Site Scripting)** — tajovuzkor jabrlanuvchi brauzerida zararli JavaScript kodini ishga tushirishga muvaffaq bo'ladigan zaiflik (OWASP Top 10: A03:2021).\n\n"
+            "#### XSS Turlari:\n"
+            "1. **Stored (Doimiy) XSS**: Zararli skript ma'lumotlar bazasida saqlanadi (masalan, izohlarda) va sahifani ochgan har bir foydalanuvchiga uzatiladi.\n"
+            "2. **Reflected (Aks ettirilgan) XSS**: Skript URL so'rov parametri orqali yuboriladi va server javobida filtrlanmasdan qaytariladi.\n"
+            "3. **DOM-based XSS**: Brauzer tomonidagi zaif JavaScript funksiyalari (`innerHTML`, `document.write`, `eval`) orqali vujudga keladi.\n\n"
+            "#### ❌ Xavfli Kod (Zaif JS):\n"
+            "```javascript\n"
+            "// XATOLIK: Foydalanuvchi matni to'g'ridan-to'g'ri HTML ichiga kiritilmoqda\n"
+            "document.getElementById('username-display').innerHTML = userInput;\n"
+            "```\n\n"
+            "#### ✅ Xavfsiz Kod Namunasi:\n"
+            "```javascript\n"
+            "// TO'G'RI: textContent HTML teglarni matn sifatida xavfsiz aks ettiradi\n"
+            "document.getElementById('username-display').textContent = userInput;\n"
+            "```\n\n"
+            "#### Asosiy Mudofaa Qoidalari:\n"
+            "- HTML Output Encoding (barcha maxsus `< > & \" '` belgilarni almashtirish);\n"
+            "- Qat'iy **CSP (Content-Security-Policy)** sarlavhasini o'rnatish;\n"
+            "- Sessiya kukiylarini `HttpOnly` va `SameSite=Strict` bayroqlari bilan shifrlash."
+        )
+
     # 9. Cybersecurity: Security Headers (HSTS, CSP, etc.)
     if any(kw in lower for kw in ["hsts", "csp", "x-frame-options", "nosniff", "security headers", "sarlavha"]):
         return (
