@@ -6,7 +6,7 @@
 // Default AI Settings
 const DEFAULT_AI_SETTINGS = {
   provider: "gemini",
-  model: "gemini-2.0-flash",
+  model: "gemini-3.5-flash",
   apiKey: "",
   baseUrl: "",
   persona: "senior_architect",
@@ -21,6 +21,10 @@ const DEFAULT_AI_SETTINGS = {
 let loadedSettings = null;
 try {
   loadedSettings = JSON.parse(localStorage.getItem("cyberai_settings"));
+  if (loadedSettings && ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.5-flash-lite"].includes(loadedSettings.model)) {
+    loadedSettings.model = "gemini-3.5-flash";
+    localStorage.setItem("cyberai_settings", JSON.stringify(loadedSettings));
+  }
 } catch (e) {}
 
 // Global State
@@ -432,7 +436,7 @@ function setupSettingsModal() {
   function syncFormWithSettings() {
     const s = CYBERAI.settings;
     if (providerSelect) providerSelect.value = s.provider || "gemini";
-    if (modelInput) modelInput.value = s.model || "gemini-2.0-flash";
+    if (modelInput) modelInput.value = s.model || "gemini-3.5-flash";
     if (apiKeyInput) apiKeyInput.value = s.apiKey || "";
     if (baseUrlInput) baseUrlInput.value = s.baseUrl || "";
     if (systemPromptInput) systemPromptInput.value = s.systemPrompt || PERSONA_PROMPTS[s.persona] || "";
@@ -527,7 +531,7 @@ function setupSettingsModal() {
     providerSelect.addEventListener("change", () => {
       const p = providerSelect.value;
       if (p === "gemini") {
-        modelInput.value = "gemini-2.0-flash";
+        modelInput.value = "gemini-3.5-flash";
         if (baseUrlInput) baseUrlInput.placeholder = "Google Generative Language API";
       } else if (p === "deepseek") {
         modelInput.value = "deepseek-chat";
@@ -542,7 +546,7 @@ function setupSettingsModal() {
         modelInput.value = "llama3";
         if (baseUrlInput) baseUrlInput.placeholder = "http://localhost:11434";
       } else if (p === "cyberai") {
-        modelInput.value = "gemini-2.0-flash";
+        modelInput.value = "gemini-3.5-flash";
       }
     });
   }

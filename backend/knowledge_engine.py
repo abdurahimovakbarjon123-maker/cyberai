@@ -434,7 +434,7 @@ def generate_smart_response(prompt: str, messages: List[Dict[str, str]], languag
             return "Buyuk Britaniyaning poytaxti — **London** shahri."
 
     # 11. Creative Writing / Poetry / Inspiration
-    if any(kw in lower for kw in ["she'r", "sher", "yozib ber", "insho", "maqola", "hikoya"]):
+    if any(kw in lower for kw in ["she'r", "sher yoz", "she'riyat", "insho yoz", "hikoya yoz"]):
         return (
             "### ✍️ Kiber Olami va Maqsad Sari (She'riy satrlar)\n\n"
             "*Qorong'i tun ichra yonadi ekran,*\n"

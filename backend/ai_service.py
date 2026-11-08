@@ -425,10 +425,10 @@ async def stream_ai_response(
             await asyncio.sleep(0.015)
         return
 
-    # Check Google Gemini Provider
-    if prov in ("gemini", "google") or ("gemini" in (model or "").lower()):
-        req_model = model or settings.GEMINI_MODEL or "gemini-2.0-flash"
-        gemini_key = user_key or settings.GEMINI_API_KEY
+    # Check Google Gemini Provider (Explicit or Server Default)
+    gemini_key = (api_key if prov in ("gemini", "google") else None) or settings.GEMINI_API_KEY or user_key
+    if (prov in ("gemini", "google") or ("gemini" in (model or "").lower()) or (settings.GEMINI_API_KEY and prov in ("cyberai", ""))) and gemini_key:
+        req_model = model if (model and "gemini" in model.lower()) else (settings.GEMINI_MODEL or "gemini-3.5-flash")
         try:
             async for chunk in _stream_gemini(
                 messages,
@@ -522,7 +522,7 @@ async def stream_ai_response(
 
 async def _stream_gemini(
     messages: List[Dict[str, str]],
-    model: str = "gemini-2.0-flash",
+    model: str = "gemini-3.5-flash",
     language: str = "uz",
     api_key: Optional[str] = None,
     temperature: float = 0.7,
@@ -530,8 +530,9 @@ async def _stream_gemini(
     max_tokens: int = 4096
 ) -> AsyncGenerator[str, None]:
     """
-    Streams response from Google Gemini API (gemini-2.0-flash, gemini-1.5-flash, gemini-1.5-pro).
+    Streams response from Google Gemini API (gemini-3.5-flash, gemini-flash-lite-latest, gemini-3.8-flash).
     Uses official Google Generative Language REST SSE stream.
+    Includes auto-remap and resilient fallback for deprecated models.
     """
     key = api_key or settings.GEMINI_API_KEY or settings.AI_API_KEY
     if not key:
@@ -551,10 +552,19 @@ async def _stream_gemini(
             await asyncio.sleep(0.012)
         return
 
-    # Clean model identifier
-    target_model = model.strip() if model else "gemini-2.0-flash"
-    if not target_model.startswith("gemini-"):
-        target_model = "gemini-2.0-flash"
+    # Clean model identifier & remap deprecated models automatically
+    target_model = model.strip() if model else "gemini-3.5-flash"
+    deprecated_models = {
+        "gemini-2.0-flash": "gemini-3.5-flash",
+        "gemini-2.5-flash": "gemini-3.5-flash",
+        "gemini-1.5-flash": "gemini-3.5-flash",
+        "gemini-1.5-pro": "gemini-3.5-flash",
+        "gemini-2.5-flash-lite": "gemini-flash-lite-latest",
+    }
+    if target_model in deprecated_models:
+        target_model = deprecated_models[target_model]
+    elif not target_model.startswith("gemini-"):
+        target_model = "gemini-3.5-flash"
 
     base_sys = SYSTEM_PROMPTS.get(language, SYSTEM_PROMPTS["uz"])
     final_sys = f"{base_sys}\n\nQO'SHIMCHA KO'RSATMA:\n{system_prompt}" if system_prompt else base_sys
@@ -585,46 +595,65 @@ async def _stream_gemini(
         }
     }
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{target_model}:streamGenerateContent?alt=sse&key={key}"
+    # Attempt primary model, fallback to gemini-flash-lite-latest if 404
+    candidate_models = [target_model]
+    if "gemini-3.5-flash" not in candidate_models:
+        candidate_models.append("gemini-3.5-flash")
+    if "gemini-flash-lite-latest" not in candidate_models:
+        candidate_models.append("gemini-flash-lite-latest")
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        async with client.stream("POST", url, json=body, headers={"Content-Type": "application/json"}) as resp:
-            if resp.status_code != 200:
-                err_bytes = await resp.aread()
-                err_text = err_bytes.decode("utf-8", errors="ignore")
-                if resp.status_code in (400, 401, 403):
-                    yield (
-                        f"⚠️ **Google Gemini Xatosi ({resp.status_code}):** API kalit noto'g'ri yoki ruxsat berilmagan.\n\n"
-                        "Iltimos, [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) sahifasidan yangi bepul kalit oling.\n\n"
-                        "---\n\n"
-                    )
-                    last_msg = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
-                    full_text = generate_smart_response(last_msg, messages, language, system_prompt)
-                    words = full_text.split(" ")
-                    for i, word in enumerate(words):
-                        yield word + (" " if i < len(words) - 1 else "")
-                        await asyncio.sleep(0.012)
-                    return
-                else:
-                    yield f"[Gemini API Xatosi {resp.status_code}: {err_text}]"
-                    return
+    async with httpx.AsyncClient(timeout=45.0) as client:
+        last_error = None
+        for current_model in candidate_models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{current_model}:streamGenerateContent?alt=sse&key={key}"
+            try:
+                async with client.stream("POST", url, json=body, headers={"Content-Type": "application/json"}) as resp:
+                    if resp.status_code == 200:
+                        async for line in resp.aiter_lines():
+                            if not line or not line.startswith("data: "):
+                                continue
+                            data_str = line[6:].strip()
+                            try:
+                                data = json.loads(data_str)
+                                candidates = data.get("candidates", [])
+                                if candidates:
+                                    content = candidates[0].get("content", {})
+                                    parts = content.get("parts", [])
+                                    for p in parts:
+                                        text_piece = p.get("text", "")
+                                        if text_piece:
+                                            yield text_piece
+                            except Exception:
+                                continue
+                        return  # Successfully streamed
+                    elif resp.status_code == 404:
+                        # Model not available in this tier, try next fallback candidate
+                        continue
+                    elif resp.status_code in (400, 401, 403):
+                        err_bytes = await resp.aread()
+                        err_text = err_bytes.decode("utf-8", errors="ignore")
+                        yield (
+                            f"⚠️ **Google Gemini Xatosi ({resp.status_code}):** API kalit noto'g'ri yoki ruxsat berilmagan.\n\n"
+                            "Iltimos, [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) sahifasidan yangi bepul kalit oling.\n\n"
+                            f"*Tafsilot:* `{err_text[:200]}`\n\n---\n\n"
+                        )
+                        last_msg = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
+                        full_text = generate_smart_response(last_msg, messages, language, system_prompt)
+                        words = full_text.split(" ")
+                        for i, word in enumerate(words):
+                            yield word + (" " if i < len(words) - 1 else "")
+                            await asyncio.sleep(0.012)
+                        return
+                    else:
+                        err_bytes = await resp.aread()
+                        err_text = err_bytes.decode("utf-8", errors="ignore")
+                        last_error = f"[Gemini API Xatosi {resp.status_code}: {err_text}]"
+            except Exception as ex:
+                last_error = str(ex)
+                continue
 
-            async for line in resp.aiter_lines():
-                if not line or not line.startswith("data: "):
-                    continue
-                data_str = line[6:].strip()
-                try:
-                    data = json.loads(data_str)
-                    candidates = data.get("candidates", [])
-                    if candidates:
-                        content = candidates[0].get("content", {})
-                        parts = content.get("parts", [])
-                        for p in parts:
-                            text_piece = p.get("text", "")
-                            if text_piece:
-                                yield text_piece
-                except Exception:
-                    continue
+        if last_error:
+            yield f"\n\n[Google Gemini Ulanish Xatosi: {last_error}]"
 
 
 async def _stream_openai(

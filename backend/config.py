@@ -25,11 +25,11 @@ class Settings(BaseModel):
     # Supported: 'gemini', 'openai', 'deepseek', 'groq', 'ollama', 'cyberai'
     AI_PROVIDER: str = os.getenv("AI_PROVIDER", "gemini").lower()
     AI_API_KEY: str = os.getenv("AI_API_KEY", "")
-    AI_MODEL: str = os.getenv("AI_MODEL", "gemini-2.0-flash")
+    AI_MODEL: str = os.getenv("AI_MODEL", "gemini-3.5-flash")
     AI_BASE_URL: str = os.getenv("AI_BASE_URL", "https://api.openai.com/v1")
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", os.getenv("AI_API_KEY", ""))
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
 
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'cyberai.db'}")
