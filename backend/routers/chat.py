@@ -20,8 +20,84 @@ from backend.schemas import (
 from backend.dependencies import get_current_user, log_audit_event, check_rate_limit
 from backend.ai_service import stream_ai_response, SYSTEM_PROMPTS
 from backend.config import settings
+import re
 
 router = APIRouter(prefix="/api", tags=["Chat & Conversations"])
+
+
+def generate_smart_title(message: str, has_image: bool = False, language: str = "uz") -> str:
+    """
+    Generates a clean, human-friendly, concise topic title (2-5 words)
+    instead of storing raw user prompt sentences and typos.
+    """
+    raw = (message or "").strip()
+    if not raw and has_image:
+        return "Rasm va Tasvir Tahlili" if language == "uz" else "Image Analysis"
+
+    lower = raw.lower()
+
+    # 1. Greetings
+    if any(lower.startswith(g) for g in ["salom", "assalom", "privet", "hello", "hi", "hey"]):
+        return "Umumiy Suhbat" if language == "uz" else "General Conversation"
+
+    # 2. Database & SQL
+    if "sql" in lower:
+        if any(w in lower for w in ["mano", "nima", "tushun", "haqida"]):
+            return "SQL Tushunchasi va Ma'nosi"
+        if any(w in lower for w in ["injeksiya", "injection", "sqli"]):
+            return "SQL Injection Himoyasi"
+        return "SQL va Ma'lumotlar Bazasi"
+
+    if any(w in lower for w in ["database", "baza", "postgresql", "mysql", "sqlite", "mongodb"]):
+        return "Ma'lumotlar Bazasi Tahlili"
+
+    # 3. Dangerous/malicious code & exploits
+    if any(w in lower for w in ["havli", "xavfli", "virus", "trojan", "malware", "zararli"]):
+        return "Xavfli Kodlar Tahlili"
+    if any(w in lower for w in ["xaker", "hacker", "hack", "buzib", "pen-test", "pentest"]):
+        return "Kiberxavfsizlik Tahlili"
+
+    # 4. Errors & Debugging
+    if any(w in lower for w in ["ishlamaybdi", "ishlamayapti", "ishlamadi", "xato", "error", "bug", "crash", "muammo"]):
+        return "Xatolik va Muammoni Bartaraf Etish"
+
+    # 5. Telegram Bot
+    if any(w in lower for w in ["telegram bot", "aiogram", "bot yaratish", "tg bot"]):
+        return "Telegram Bot Dasturlash"
+
+    # 6. Programming Languages & Frameworks
+    if "python" in lower:
+        return "Python Dasturlash"
+    if any(w in lower for w in ["javascript", "react", "vue", "frontend", "html", "css"]):
+        return "Frontend Dasturlash"
+    if any(w in lower for w in ["fastapi", "django", "flask", "backend"]):
+        return "Backend Dasturlash"
+
+    # 7. Math
+    if any(op in raw for op in ["+", "-", "*", "/"]) and any(c.isdigit() for c in raw):
+        return "Matematik Hisoblash"
+
+    # 8. Website security / checking
+    if any(w in lower for w in ["sayt", "domen", "url", "https"]):
+        return "Veb-sayt Tahlili"
+
+    # 9. General semantic cleanup
+    cleaned = re.sub(
+        r"\b(manga|menga|yozb\s*ber|yozib\s*ber|ber|ko|koray|ko'ray|iltimos|aka|uka|bir|qilib\s*ber|qilb\s*ber|haqida|ayt|aytib\s*ber)\b",
+        "",
+        raw,
+        flags=re.IGNORECASE
+    )
+    cleaned = re.sub(r"[?!.,;:_\"'()\[\]]+", " ", cleaned).strip()
+    words = [w for w in cleaned.split() if len(w) > 1]
+
+    if not words:
+        return "Yangi Suhbat" if language == "uz" else "New Conversation"
+
+    short_title = " ".join(words[:4]).title()
+    if has_image:
+        short_title = f"{short_title} (Rasm)"
+    return short_title[:40]
 
 
 @router.get("/conversations", response_model=List[ConversationResponse])
@@ -40,6 +116,14 @@ def list_conversations(
     )
     result = []
     for c in convs:
+        # Auto-clean legacy slang or raw message titles in history
+        if c.title and (any(c.title.lower().startswith(s) for s in ["manga", "nmaga", "sql manosi", "ushbu rasm"]) or len(c.title) > 35):
+            c.title = generate_smart_title(c.title, has_image=("rasm" in c.title.lower()), language=c.language)
+            try:
+                db.commit()
+            except Exception:
+                db.rollback()
+
         count = len(c.messages)
         res_item = ConversationResponse(
             id=c.id,
@@ -196,7 +280,7 @@ async def chat_synchronous(
         ).first()
 
     if not conversation:
-        title = req.message[:45] + ("..." if len(req.message) > 45 else "")
+        title = generate_smart_title(req.message, has_image=bool(req.image_data), language=req.language or "uz")
         conversation = Conversation(
             id=req.conversation_id or str(uuid.uuid4()),
             user_id=current_user.id,
@@ -285,7 +369,7 @@ async def chat_stream(
     is_new = False
     if not conversation:
         is_new = True
-        title = req.message[:45] + ("..." if len(req.message) > 45 else "")
+        title = generate_smart_title(req.message, has_image=bool(req.image_data), language=req.language or "uz")
         conversation = Conversation(
             id=req.conversation_id or str(uuid.uuid4()),
             user_id=current_user.id,

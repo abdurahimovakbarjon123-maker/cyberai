@@ -9,8 +9,8 @@ const DEFAULT_AI_SETTINGS = {
   model: "gemini-3.5-flash",
   apiKey: "",
   baseUrl: "",
-  persona: "senior_architect",
-  systemPrompt: "Siz yuqori malakali Senior Kiberxavfsizlik Arxitektori (Defensive Security Architect) va xavfsiz dasturiy ta'minot muhandisisiz. OWASP Top 10, FastAPI/Python xavfsiz arxitekturasi va korporativ mudofaa bo'yicha professional maslahat bering.",
+  persona: "friendly_expert",
+  systemPrompt: "Samimiy, tushunarli va do'stona insonga o'xshab muloqot qiling. Quruq robotdek rasmiyatchilikdan butunlay qoching. Dasturlash va kiberxavfsizlik bo'yicha savollarga aniq, hayotiy va foydali javob bering.",
   temperature: 0.7,
   maxTokens: 4096,
   historyLimit: 10,
@@ -21,8 +21,13 @@ const DEFAULT_AI_SETTINGS = {
 let loadedSettings = null;
 try {
   loadedSettings = JSON.parse(localStorage.getItem("cyberai_settings"));
-  if (loadedSettings && ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.5-flash-lite"].includes(loadedSettings.model)) {
-    loadedSettings.model = "gemini-3.5-flash";
+  if (loadedSettings) {
+    if (["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.5-flash-lite"].includes(loadedSettings.model)) {
+      loadedSettings.model = "gemini-3.5-flash";
+    }
+    if (loadedSettings.systemPrompt && (loadedSettings.systemPrompt.includes("Senior Kiberxavfsizlik") || loadedSettings.systemPrompt.includes("Defensive Security Architect"))) {
+      loadedSettings.systemPrompt = DEFAULT_AI_SETTINGS.systemPrompt;
+    }
     localStorage.setItem("cyberai_settings", JSON.stringify(loadedSettings));
   }
 } catch (e) {}

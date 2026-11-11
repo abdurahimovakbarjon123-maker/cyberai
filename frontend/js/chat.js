@@ -22,6 +22,12 @@ function initChat() {
   loadConversationsList();
   setupImageUploadHandlers();
 
+  // Restore previous active conversation if saved
+  const savedConvId = localStorage.getItem("cyberai_active_conv");
+  if (savedConvId) {
+    selectConversation(savedConvId);
+  }
+
   const sendBtn = document.getElementById("send-btn");
   const stopBtn = document.getElementById("stop-btn");
   const chatInput = document.getElementById("chat-input");
@@ -362,6 +368,7 @@ async function selectConversation(id) {
   }
 
   activeConversationId = id;
+  localStorage.setItem("cyberai_active_conv", id);
   updateActiveSidebarItem(id);
 
   const chatMessages = document.getElementById("chat-messages");
@@ -370,7 +377,9 @@ async function selectConversation(id) {
   try {
     const res = await apiFetch(`/api/conversations/${id}`);
     if (!res.ok) {
-      showToast("Suhbatni yuklab bo'lmadi.", "error");
+      localStorage.removeItem("cyberai_active_conv");
+      activeConversationId = null;
+      renderWelcomeScreen();
       return;
     }
 
@@ -402,6 +411,7 @@ function startNewChat() {
     handleStopStreaming();
   }
   activeConversationId = null;
+  localStorage.removeItem("cyberai_active_conv");
   updateActiveSidebarItem(null);
   renderWelcomeScreen();
   const input = document.getElementById("chat-input");
@@ -567,6 +577,7 @@ async function handleSendMessage() {
 
           if (payload.conversation_id && !activeConversationId) {
             activeConversationId = payload.conversation_id;
+            localStorage.setItem("cyberai_active_conv", activeConversationId);
             loadConversationsList();
           }
 
