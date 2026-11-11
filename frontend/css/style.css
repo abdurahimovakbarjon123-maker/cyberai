@@ -1899,3 +1899,61 @@ input:checked + .cyber-slider:before {
 .markdown-body img:hover {
   transform: scale(1.015);
 }
+
+/* Window/Chat Drag & Drop Visual Overlay */
+.chat-drag-drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 999;
+  background: rgba(10, 15, 29, 0.9);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border-radius: var(--radius-lg);
+  transition: opacity 0.25s ease;
+}
+
+.chat-drag-drop-modal {
+  padding: 3rem 4rem;
+  border: 2px dashed var(--accent-primary);
+  border-radius: var(--radius-lg);
+  background: rgba(18, 26, 47, 0.95);
+  box-shadow: 0 0 50px rgba(0, 245, 212, 0.35);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  animation: pulseDropzone 2s infinite ease-in-out;
+  pointer-events: none;
+}
+
+@keyframes pulseDropzone {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 35px rgba(0, 245, 212, 0.25);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 65px rgba(0, 245, 212, 0.55);
+  }
+}
+
+.chat-drag-drop-icon {
+  color: var(--accent-primary);
+  filter: drop-shadow(0 0 10px rgba(0, 245, 212, 0.6));
+}
+
+.chat-drag-drop-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.chat-drag-drop-desc {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  max-width: 380px;
+}

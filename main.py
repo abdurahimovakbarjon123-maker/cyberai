@@ -64,6 +64,11 @@ async def add_security_headers_middleware(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     # Permissions Policy
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    # Cache Control for static assets and HTML to avoid stale cached UI
+    if request.url.path.startswith("/js/") or request.url.path.startswith("/css/") or request.url.path == "/":
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
     return response
 
 # Include API Routers

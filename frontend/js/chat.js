@@ -88,10 +88,16 @@ function setupImageUploadHandlers() {
   const fileInput = document.getElementById("chat-image-input");
   const removeBtn = document.getElementById("chat-image-remove-btn");
   const chatInput = document.getElementById("chat-input");
-  const inputWrapper = document.getElementById("chat-input-wrapper");
+  const dropOverlay = document.getElementById("chat-drag-drop-overlay");
 
+  // File Picker Button
   if (uploadBtn && fileInput) {
-    uploadBtn.addEventListener("click", () => fileInput.click());
+    uploadBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      fileInput.value = ""; // Reset so same file re-selection triggers change
+      fileInput.click();
+    });
+
     fileInput.addEventListener("change", (e) => {
       if (e.target.files && e.target.files[0]) {
         processSelectedImage(e.target.files[0]);
@@ -99,84 +105,179 @@ function setupImageUploadHandlers() {
     });
   }
 
+  // Remove attached image
   if (removeBtn) {
     removeBtn.addEventListener("click", clearAttachedImage);
   }
 
-  // Clipboard paste of images (Ctrl + V)
-  if (chatInput) {
-    chatInput.addEventListener("paste", (e) => {
-      const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
-      if (!items) return;
+  // Global Clipboard paste of images (Ctrl + V anywhere on page)
+  window.addEventListener("paste", (e) => {
+    // If typing in another input (like settings modal text input), ignore unless it has image data
+    const activeEl = document.activeElement;
+    if (activeEl && activeEl !== chatInput && activeEl.tagName === "INPUT" && activeEl.type === "text") {
+      return;
+    }
+
+    const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
+    if (items) {
       for (const item of items) {
         if (item.kind === "file" && item.type.startsWith("image/")) {
           const file = item.getAsFile();
           if (file) {
             e.preventDefault();
             processSelectedImage(file);
-            break;
+            return;
           }
         }
       }
-    });
-  }
+    }
 
-  // Drag & Drop on chat input area
-  if (inputWrapper) {
-    inputWrapper.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      inputWrapper.classList.add("drag-over");
-    });
-    inputWrapper.addEventListener("dragleave", () => {
-      inputWrapper.classList.remove("drag-over");
-    });
-    inputWrapper.addEventListener("drop", (e) => {
-      e.preventDefault();
-      inputWrapper.classList.remove("drag-over");
-      if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
-        const file = e.dataTransfer.files[0];
-        if (file.type.startsWith("image/")) {
+    const files = e.clipboardData?.files;
+    if (files && files.length > 0) {
+      for (const file of files) {
+        if (file.type.startsWith("image/") || /\.(png|jpe?g|webp|gif|bmp|svg|jfif)$/i.test(file.name)) {
+          e.preventDefault();
           processSelectedImage(file);
+          return;
         }
       }
-    });
-  }
+    }
+  });
+
+  // Global Drag & Drop over Window and Chat Container
+  let dragCounter = 0;
+
+  window.addEventListener("dragenter", (e) => {
+    if (e.dataTransfer && e.dataTransfer.types && Array.from(e.dataTransfer.types).includes("Files")) {
+      dragCounter++;
+      if (dropOverlay) dropOverlay.style.display = "flex";
+    }
+  });
+
+  window.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = "copy";
+    }
+  });
+
+  window.addEventListener("dragleave", (e) => {
+    dragCounter--;
+    if (dragCounter <= 0) {
+      dragCounter = 0;
+      if (dropOverlay) dropOverlay.style.display = "none";
+    }
+  });
+
+  window.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    if (dropOverlay) dropOverlay.style.display = "none";
+
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      for (const file of files) {
+        if (file.type.startsWith("image/") || /\.(png|jpe?g|webp|gif|bmp|svg|jfif)$/i.test(file.name)) {
+          processSelectedImage(file);
+          break;
+        }
+      }
+    }
+  });
 }
 
 function processSelectedImage(file) {
-  if (!file.type.startsWith("image/")) {
+  const isImage = file.type.startsWith("image/") || /\.(png|jpe?g|webp|gif|bmp|svg|jfif)$/i.test(file.name);
+  if (!isImage) {
     showToast("Faqat rasm fayllari (PNG, JPG, WebP) qabul qilinadi.", "error");
     return;
   }
 
-  // 10MB limit check
-  if (file.size > 10 * 1024 * 1024) {
-    showToast("Rasm hajmi juda katta (maksimal 10MB).", "warning");
+  // 15MB limit check
+  if (file.size > 15 * 1024 * 1024) {
+    showToast("Rasm hajmi juda katta (maksimal 15MB).", "warning");
     return;
   }
 
   const reader = new FileReader();
   reader.onload = (e) => {
-    const dataUrl = e.target.result;
-    currentAttachedImage = {
-      dataUrl: dataUrl,
-      name: file.name || "screenshot.png"
+    const rawDataUrl = e.target.result;
+
+    // Canvas optimization (downscale if image exceeds 1920px for rapid streaming)
+    const img = new Image();
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      const maxDim = 1920;
+      let finalDataUrl = rawDataUrl;
+
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          const mime = file.type && file.type.startsWith("image/") ? file.type : "image/jpeg";
+          finalDataUrl = canvas.toDataURL(mime, 0.9);
+        } catch (canvasErr) {
+          finalDataUrl = rawDataUrl;
+        }
+      }
+
+      currentAttachedImage = {
+        dataUrl: finalDataUrl,
+        name: file.name || "screenshot.png"
+      };
+
+      // Update preview container
+      const previewContainer = document.getElementById("chat-image-preview-container");
+      const previewImg = document.getElementById("chat-image-preview");
+      const nameSpan = document.getElementById("chat-image-name");
+
+      if (previewImg) previewImg.src = finalDataUrl;
+      if (nameSpan) nameSpan.textContent = file.name || "Screenshot.png";
+      if (previewContainer) previewContainer.style.display = "flex";
+
+      const chatInput = document.getElementById("chat-input");
+      if (chatInput) {
+        chatInput.focus();
+      }
+
+      showToast("Rasm biriktirildi! Endi savolingizni yozing yoki 'Yuborish' tugmasini bosing.", "success");
     };
 
-    // Update preview container
-    const previewContainer = document.getElementById("chat-image-preview-container");
-    const previewImg = document.getElementById("chat-image-preview");
-    const nameSpan = document.getElementById("chat-image-name");
+    img.onerror = () => {
+      // Fallback if Image loading fails
+      currentAttachedImage = {
+        dataUrl: rawDataUrl,
+        name: file.name || "image.png"
+      };
+      const previewContainer = document.getElementById("chat-image-preview-container");
+      const previewImg = document.getElementById("chat-image-preview");
+      const nameSpan = document.getElementById("chat-image-name");
 
-    if (previewImg) previewImg.src = dataUrl;
-    if (nameSpan) nameSpan.textContent = file.name || "Screenshot";
-    if (previewContainer) previewContainer.style.display = "flex";
+      if (previewImg) previewImg.src = rawDataUrl;
+      if (nameSpan) nameSpan.textContent = file.name || "image.png";
+      if (previewContainer) previewContainer.style.display = "flex";
 
-    const chatInput = document.getElementById("chat-input");
-    if (chatInput) chatInput.focus();
+      showToast("Rasm biriktirildi!", "success");
+    };
 
-    showToast("Rasm ulandi! Savolingizni yozing yoki to'g'ridan-to'g'ri 'Yuborish' tugmasini bosing.", "info");
+    img.src = rawDataUrl;
   };
+
+  reader.onerror = () => {
+    showToast("Faylni o'qishda xatolik yuz berdi.", "error");
+  };
+
   reader.readAsDataURL(file);
 }
 
