@@ -82,11 +82,12 @@ class MessageResponse(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    message: str = Field(..., min_length=1, max_length=15000, description="Xabar matni")
+    message: Optional[str] = Field("Ushbu rasmni tahlil qiling", max_length=15000, description="Xabar matni")
+    image_data: Optional[str] = Field(None, description="Base64 rasm kodi yoki Data URL (data:image/...)")
     conversation_id: Optional[str] = Field(None, description="Mavjud suhbat identifikatori (agar yangi bo'lsa bo'sh)")
-    model: Optional[str] = Field("gpt-4o-mini", description="Tanlangan AI modeli")
+    model: Optional[str] = Field("gemini-3.5-flash", description="Tanlangan AI modeli")
     language: Optional[str] = Field("uz", description="Suhbat tili ('uz', 'en', 'ru')")
-    provider: Optional[str] = Field("cyberai", description="AI Provayder ('cyberai', 'openai', 'deepseek', 'groq', 'ollama', 'custom')")
+    provider: Optional[str] = Field("gemini", description="AI Provayder ('gemini', 'cyberai', 'openai', 'deepseek', 'groq', 'ollama', 'custom')")
     api_key: Optional[str] = Field(None, description="Foydalanuvchining shaxsiy API kaliti")
     base_url: Optional[str] = Field(None, description="Maxsus API Base URL")
     temperature: Optional[float] = Field(0.7, ge=0.0, le=2.0, description="Kreativlik harorati")

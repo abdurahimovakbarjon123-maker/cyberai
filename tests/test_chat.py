@@ -61,6 +61,23 @@ def test_synchronous_chat_endpoint():
     assert len(data["message"]) > 0
 
 
+def test_chat_with_image_attachment():
+    token = get_auth_token("imguser", "imguser@cyberai.local")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    payload = {
+        "message": "Ushbu rasmni tahlil qil",
+        "image_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+        "language": "uz"
+    }
+    res = client.post("/api/chat", json=payload, headers=headers)
+    assert res.status_code == 200
+    data = res.json()
+    assert "conversation_id" in data
+    assert "message" in data
+    assert len(data["message"]) > 0
+
+
 def test_malicious_prompt_refusal():
     token = get_auth_token()
     headers = {"Authorization": f"Bearer {token}"}

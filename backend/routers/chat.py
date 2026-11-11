@@ -209,10 +209,14 @@ async def chat_synchronous(
         db.refresh(conversation)
 
     # Save user message
+    user_content = req.message or "Ushbu rasmni tahlil qiling"
+    if req.image_data and "data:image" in req.image_data and req.image_data not in user_content:
+        user_content = f"{user_content}\n\n![Yuklangan rasm]({req.image_data})"
+
     user_msg = Message(
         conversation_id=conversation.id,
         role="user",
-        content=req.message
+        content=user_content
     )
     db.add(user_msg)
     db.commit()
@@ -223,8 +227,8 @@ async def chat_synchronous(
         {"role": m.role, "content": m.content}
         for m in conversation.messages[-h_limit:]
     ]
-    if not any(m["role"] == "user" and m["content"] == req.message for m in history):
-        history.append({"role": "user", "content": req.message})
+    if not any(m["role"] == "user" and m["content"] == user_content for m in history):
+        history.append({"role": "user", "content": user_content})
 
     # Collect response chunks
     full_response = []
@@ -237,7 +241,8 @@ async def chat_synchronous(
         base_url=req.base_url,
         temperature=req.temperature or 0.7,
         system_prompt=req.system_prompt,
-        max_tokens=req.max_tokens or 4096
+        max_tokens=req.max_tokens or 4096,
+        image_data=req.image_data
     ):
         full_response.append(chunk)
 
@@ -293,10 +298,14 @@ async def chat_stream(
         db.refresh(conversation)
 
     # Save user message
+    user_content = req.message or "Ushbu rasmni tahlil qiling"
+    if req.image_data and "data:image" in req.image_data and req.image_data not in user_content:
+        user_content = f"{user_content}\n\n![Yuklangan rasm]({req.image_data})"
+
     user_msg = Message(
         conversation_id=conversation.id,
         role="user",
-        content=req.message
+        content=user_content
     )
     db.add(user_msg)
     db.commit()
@@ -335,7 +344,8 @@ async def chat_stream(
                 base_url=req.base_url,
                 temperature=req.temperature or 0.7,
                 system_prompt=req.system_prompt,
-                max_tokens=req.max_tokens or 4096
+                max_tokens=req.max_tokens or 4096,
+                image_data=req.image_data
             ):
                 assistant_chunks.append(chunk)
                 payload = {

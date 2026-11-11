@@ -398,7 +398,7 @@ def match_demo_response(prompt: str, language: str) -> str:
 
 
 async def stream_ai_response(
-    messages: List[Dict[str, str]],
+    messages: List[Dict[str, Any]],
     model: Optional[str] = None,
     language: str = "uz",
     provider: Optional[str] = None,
@@ -406,11 +406,13 @@ async def stream_ai_response(
     base_url: Optional[str] = None,
     temperature: float = 0.7,
     system_prompt: Optional[str] = None,
-    max_tokens: int = 4096
+    max_tokens: int = 4096,
+    image_data: Optional[str] = None
 ) -> AsyncGenerator[str, None]:
     """
     Streams AI response as text chunks.
-    Dispatches to OpenAI, DeepSeek, Groq, local Ollama, or built-in CyberAI Engine according to settings.
+    Supports multimodal images with Google Gemini and text streaming.
+    Dispatches to Google Gemini, OpenAI, DeepSeek, Groq, Ollama, or built-in CyberAI Engine.
     """
     prov = (provider or settings.AI_PROVIDER or "cyberai").lower()
     user_key = api_key or settings.AI_API_KEY
@@ -437,7 +439,8 @@ async def stream_ai_response(
                 api_key=gemini_key,
                 temperature=temperature,
                 system_prompt=system_prompt,
-                max_tokens=max_tokens
+                max_tokens=max_tokens,
+                image_data=image_data
             ):
                 yield chunk
             return
@@ -521,16 +524,18 @@ async def stream_ai_response(
 
 
 async def _stream_gemini(
-    messages: List[Dict[str, str]],
+    messages: List[Dict[str, Any]],
     model: str = "gemini-3.5-flash",
     language: str = "uz",
     api_key: Optional[str] = None,
     temperature: float = 0.7,
     system_prompt: Optional[str] = None,
-    max_tokens: int = 4096
+    max_tokens: int = 4096,
+    image_data: Optional[str] = None
 ) -> AsyncGenerator[str, None]:
     """
     Streams response from Google Gemini API (gemini-3.5-flash, gemini-flash-lite-latest, gemini-3.8-flash).
+    Supports multimodal images (inlineData with base64).
     Uses official Google Generative Language REST SSE stream.
     Includes auto-remap and resilient fallback for deprecated models.
     """
@@ -569,15 +574,50 @@ async def _stream_gemini(
     base_sys = SYSTEM_PROMPTS.get(language, SYSTEM_PROMPTS["uz"])
     final_sys = f"{base_sys}\n\nQO'SHIMCHA KO'RSATMA:\n{system_prompt}" if system_prompt else base_sys
 
-    # Convert conversation messages to Gemini contents structure
+    # Convert conversation messages to Gemini contents structure (supporting multimodal inlineData)
+    import re
     gemini_contents = []
-    for msg in messages:
+    total_msgs = len(messages)
+    for idx, msg in enumerate(messages):
         role = "model" if msg["role"] == "assistant" else "user"
         content_text = msg.get("content", "")
+        msg_img = msg.get("image_data")
+
+        # Extract markdown embedded data:image if present
+        if not msg_img and "data:image/" in content_text:
+            match = re.search(r'!\[([^\]]*)\]\((data:image\/[a-zA-Z0-9.+]+;base64,[^\)]+)\)', content_text)
+            if match:
+                msg_img = match.group(2)
+                content_text = re.sub(r'!\[([^\]]*)\]\((data:image\/[a-zA-Z0-9.+]+;base64,[^\)]+)\)', '', content_text).strip()
+
+        # If it's the latest user message and image_data was passed explicitly
+        if idx == total_msgs - 1 and role == "user" and image_data and not msg_img:
+            msg_img = image_data
+
+        parts = []
         if content_text:
+            parts.append({"text": content_text})
+        elif msg_img:
+            parts.append({"text": "Ushbu rasm yoki skrinshotni batafsil ko'rib chiqib, undagi ma'lumotlarni tahlil qiling va tushuntiring."})
+
+        if msg_img:
+            mime_type = "image/jpeg"
+            b64_data = msg_img
+            if "," in msg_img:
+                header, b64_data = msg_img.split(",", 1)
+                if ":" in header and ";" in header:
+                    mime_type = header.split(":")[1].split(";")[0]
+            parts.append({
+                "inlineData": {
+                    "mimeType": mime_type,
+                    "data": b64_data.strip()
+                }
+            })
+
+        if parts:
             gemini_contents.append({
                 "role": role,
-                "parts": [{"text": content_text}]
+                "parts": parts
             })
 
     if not gemini_contents:

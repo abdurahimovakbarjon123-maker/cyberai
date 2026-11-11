@@ -8,6 +8,7 @@ let activeConversationId = null;
 let currentAbortController = null;
 let isStreaming = false;
 let lastUserMessageText = "";
+let currentAttachedImage = null; // { dataUrl: string, name: string }
 
 document.addEventListener("DOMContentLoaded", () => {
   // Check if we are on the chat page (index.html)
@@ -19,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function initChat() {
   loadConversationsList();
+  setupImageUploadHandlers();
 
   const sendBtn = document.getElementById("send-btn");
   const stopBtn = document.getElementById("stop-btn");
@@ -76,6 +78,117 @@ function initChat() {
       this.style.height = Math.min(this.scrollHeight, 180) + "px";
     });
   }
+}
+
+/**
+ * Image Upload & Multimodal Vision Handlers
+ */
+function setupImageUploadHandlers() {
+  const uploadBtn = document.getElementById("chat-upload-img-btn");
+  const fileInput = document.getElementById("chat-image-input");
+  const removeBtn = document.getElementById("chat-image-remove-btn");
+  const chatInput = document.getElementById("chat-input");
+  const inputWrapper = document.getElementById("chat-input-wrapper");
+
+  if (uploadBtn && fileInput) {
+    uploadBtn.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", (e) => {
+      if (e.target.files && e.target.files[0]) {
+        processSelectedImage(e.target.files[0]);
+      }
+    });
+  }
+
+  if (removeBtn) {
+    removeBtn.addEventListener("click", clearAttachedImage);
+  }
+
+  // Clipboard paste of images (Ctrl + V)
+  if (chatInput) {
+    chatInput.addEventListener("paste", (e) => {
+      const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.kind === "file" && item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            processSelectedImage(file);
+            break;
+          }
+        }
+      }
+    });
+  }
+
+  // Drag & Drop on chat input area
+  if (inputWrapper) {
+    inputWrapper.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      inputWrapper.classList.add("drag-over");
+    });
+    inputWrapper.addEventListener("dragleave", () => {
+      inputWrapper.classList.remove("drag-over");
+    });
+    inputWrapper.addEventListener("drop", (e) => {
+      e.preventDefault();
+      inputWrapper.classList.remove("drag-over");
+      if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
+        const file = e.dataTransfer.files[0];
+        if (file.type.startsWith("image/")) {
+          processSelectedImage(file);
+        }
+      }
+    });
+  }
+}
+
+function processSelectedImage(file) {
+  if (!file.type.startsWith("image/")) {
+    showToast("Faqat rasm fayllari (PNG, JPG, WebP) qabul qilinadi.", "error");
+    return;
+  }
+
+  // 10MB limit check
+  if (file.size > 10 * 1024 * 1024) {
+    showToast("Rasm hajmi juda katta (maksimal 10MB).", "warning");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    currentAttachedImage = {
+      dataUrl: dataUrl,
+      name: file.name || "screenshot.png"
+    };
+
+    // Update preview container
+    const previewContainer = document.getElementById("chat-image-preview-container");
+    const previewImg = document.getElementById("chat-image-preview");
+    const nameSpan = document.getElementById("chat-image-name");
+
+    if (previewImg) previewImg.src = dataUrl;
+    if (nameSpan) nameSpan.textContent = file.name || "Screenshot";
+    if (previewContainer) previewContainer.style.display = "flex";
+
+    const chatInput = document.getElementById("chat-input");
+    if (chatInput) chatInput.focus();
+
+    showToast("Rasm ulandi! Savolingizni yozing yoki to'g'ridan-to'g'ri 'Yuborish' tugmasini bosing.", "info");
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearAttachedImage() {
+  currentAttachedImage = null;
+  const previewContainer = document.getElementById("chat-image-preview-container");
+  const previewImg = document.getElementById("chat-image-preview");
+  const fileInput = document.getElementById("chat-image-input");
+
+  if (previewContainer) previewContainer.style.display = "none";
+  if (previewImg) previewImg.src = "";
+  if (fileInput) fileInput.value = "";
 }
 
 /**
@@ -252,9 +365,14 @@ function updateActiveSidebarItem(id) {
  */
 async function handleSendMessage() {
   const input = document.getElementById("chat-input");
-  const text = input ? input.value.trim() : "";
+  let text = input ? input.value.trim() : "";
+  const attachedImage = currentAttachedImage;
 
-  if (!text || isStreaming) return;
+  if ((!text && !attachedImage) || isStreaming) return;
+
+  if (!text && attachedImage) {
+    text = "Ushbu rasm yoki skrinshotni batafsil ko'rib chiqib, undagi ma'lumotlarni tahlil qiling va tushuntiring.";
+  }
 
   lastUserMessageText = text;
   input.value = "";
@@ -264,9 +382,16 @@ async function handleSendMessage() {
   const welcome = document.getElementById("welcome-placeholder");
   if (welcome) welcome.remove();
 
-  // Render User Message
-  appendMessageBubble("user", text);
+  // Render User Message (with image thumbnail if attached)
+  const userContent = attachedImage 
+    ? `${text}\n\n![${escapeHTML(attachedImage.name || 'Yuklangan rasm')}](${attachedImage.dataUrl})`
+    : text;
+
+  appendMessageBubble("user", userContent);
   scrollToBottom();
+
+  // Clear attached image from input bar
+  clearAttachedImage();
 
   // Prepare Assistant Placeholder Bubble with Streaming Cursor
   const assistantBubble = appendMessageBubble("assistant", "");
@@ -279,7 +404,7 @@ async function handleSendMessage() {
 
   // Read Settings, Model, and Language
   const modelSelect = document.getElementById("model-selector");
-  const selectedModel = modelSelect ? modelSelect.value : (CYBERAI.settings?.model || "gpt-4o-mini");
+  const selectedModel = modelSelect ? modelSelect.value : (CYBERAI.settings?.model || "gemini-3.5-flash");
   const s = CYBERAI.settings || {};
 
   currentAbortController = new AbortController();
@@ -295,10 +420,11 @@ async function handleSendMessage() {
       },
       body: JSON.stringify({
         message: text,
+        image_data: attachedImage ? attachedImage.dataUrl : undefined,
         conversation_id: activeConversationId,
         model: s.model || selectedModel,
         language: CYBERAI.lang,
-        provider: s.provider || "cyberai",
+        provider: s.provider || "gemini",
         api_key: s.apiKey || undefined,
         base_url: s.baseUrl || undefined,
         temperature: s.temperature !== undefined ? parseFloat(s.temperature) : 0.7,
